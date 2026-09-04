@@ -33,14 +33,14 @@ nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid 
     <label>Password</label><input id="authPassword" type="password" autocomplete="current-password" placeholder="Minimum 6 characters">
     <button type="button" class="btn" onclick="signIn()">Login</button>
     <button type="button" class="btn alt" style="width:100%;margin-top:8px" onclick="signUp()">Create account</button>
-    <div id="authMsg" class="authmsg">Connecting securelyâ¦</div>
+    <div id="authMsg" class="authmsg">Connecting securely&hellip;</div>
   </div>
 </div>
 
 <div id="appShell" style="display:none">
 <header>
   <h1 id="appTitle">Money Manager</h1>
-  <div class="sub">Loans â¢ EMIs â¢ Customers â¢ Udhar â¢ Cash Flow</div>
+  <div class="sub">Loans &bull; EMIs &bull; Customers &bull; Udhar &bull; Cash Flow</div>
   <div class="userbar" id="userBar"></div>
 </header>
 <div class="wrap">
@@ -55,17 +55,17 @@ nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid 
   <div id="app"></div>
 </div>
 <nav>
-  <button class="active" onclick="go('dash')">â<br>Home</button>
-  <button onclick="openModal('customer')">ð¤<br>Customer</button>
-  <button onclick="openModal('loan')">ð³<br>Loan/EMI</button>
-  <button onclick="openModal('tx')">ï¼<br>Transaction</button>
-  <button onclick="backup()">ð¾<br>Backup</button>
+  <button class="active" onclick="go('dash')">&#8962;<br>Home</button>
+  <button onclick="openModal('customer')">&#128100;<br>Customer</button>
+  <button onclick="openModal('loan')">&#128179;<br>Loan/EMI</button>
+  <button onclick="openModal('tx')">&#43;<br>Transaction</button>
+  <button onclick="backup()">&#128190;<br>Backup</button>
 </nav>
 </div>
 
 <div id="modal" class="modal" onclick="if(event.target===this)closeModal()">
   <div class="sheet">
-    <button class="close" onclick="closeModal()">Ã</button>
+    <button class="close" onclick="closeModal()">&times;</button>
     <h2 id="mh">Add</h2>
     <form id="form" onsubmit="saveForm(event)"><div id="fields"></div><button class="btn" style="width:100%">Save</button></form>
   </div>
@@ -92,7 +92,7 @@ function initSupabase(){
       return false;
     }
     sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
-    setAuthMsg("Ready â enter your email and password.", true);
+    setAuthMsg("Ready &mdash; enter your email and password.", true);
     return true;
   }catch(err){
     console.error(err);
@@ -103,7 +103,7 @@ function initSupabase(){
 let D={customers:[],banks:[],loans:[],emis:[],tx:[],reminders:[],settings:{business:"Money Manager"}};
 
 const $=id=>document.getElementById(id);
-const money=n=>'â¹'+Math.round(Number(n)||0).toLocaleString('en-IN');
+const money=n=>'&#8377;'+Math.round(Number(n)||0).toLocaleString('en-IN');
 const today=()=>new Date().toISOString().slice(0,10);
 const esc=s=>String(s??'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
 
@@ -115,7 +115,7 @@ async function signUp(){
     if(!email) return setAuthMsg("Please enter your email address.");
     if(!email.includes("@") || !email.includes(".")) return setAuthMsg("Please enter a valid email address.");
     if(password.length<6) return setAuthMsg("Password must be at least 6 characters.");
-    setAuthMsg("Creating your accountâ¦", true);
+    setAuthMsg("Creating your account&hellip;", true);
     const {data,error}=await sb.auth.signUp({
       email,
       password,
@@ -128,7 +128,7 @@ async function signUp(){
     if(data && data.user && !data.session){
       return setAuthMsg("Account created. Please check your email and confirm it, then come back and Login.", true);
     }
-    setAuthMsg("Account created successfully. Opening Money Managerâ¦", true);
+    setAuthMsg("Account created successfully. Opening Money Manager&hellip;", true);
   }catch(err){
     console.error(err);
     setAuthMsg("Signup error: "+(err?.message || "Please refresh and try again."));
@@ -141,7 +141,7 @@ async function signIn(){
     const email=$('authEmail').value.trim();
     const password=$('authPassword').value;
     if(!email||!password)return setAuthMsg("Enter email and password.");
-    setAuthMsg("Logging inâ¦", true);
+    setAuthMsg("Logging in&hellip;", true);
     const {error}=await sb.auth.signInWithPassword({email,password});
     if(error){
       console.error(error);
@@ -232,7 +232,7 @@ function render(p='dash'){ currentPage=p;
       <button class="btn" onclick="openModal('customer')">+ Customer</button>
       <button class="btn" onclick="openModal('loan')">+ Bank / Loan</button>
       <button class="btn alt" onclick="openModal('tx')">+ Transaction</button>
-      <button class="btn warn" onclick="notifyDue()">ð Check Reminders</button>
+      <button class="btn warn" onclick="notifyDue()">&#128276; Check Reminders</button>
     </div>
     <div class="section"><div class="title">EMI Schedule</div><div class="card">${emiRows()}</div></div>
     <div class="section"><div class="title">Recent Activity</div><div class="card">${txRows(8)}</div></div>
@@ -256,7 +256,7 @@ function customerRows(a){
   return a.map(c=>{
     const g=D.tx.filter(x=>x.customer_id===c.id&&x.transaction_type==='udhar_given').reduce((a,x)=>a+Number(x.amount||0),0);
     const r=D.tx.filter(x=>x.customer_id===c.id&&x.transaction_type==='udhar_recovered').reduce((a,x)=>a+Number(x.amount||0),0);
-    return `<div class="item"><div style="flex:1"><b>${esc(c.name)}</b><div class="small">${esc(c.phone||'No phone')} â¢ ${D.tx.filter(x=>x.customer_id===c.id).length} entries â¢ ${esc(c.account_type||'personal')}</div></div><div class="right"><b>${money(Math.max(0,g-r))}</b><div class="small">pending</div><div style="margin-top:6px"><button class="btn mini" onclick="openEdit('customer','${c.id}')">Edit</button> <button class="btn danger mini" onclick="deleteCustomer('${c.id}')">Delete</button></div></div></div>`;
+    return `<div class="item"><div style="flex:1"><b>${esc(c.name)}</b><div class="small">${esc(c.phone||'No phone')} &bull; ${D.tx.filter(x=>x.customer_id===c.id).length} entries &bull; ${esc(c.account_type||'personal')}</div></div><div class="right"><b>${money(Math.max(0,g-r))}</b><div class="small">pending</div><div style="margin-top:6px"><button class="btn mini" onclick="openEdit('customer','${c.id}')">Edit</button> <button class="btn danger mini" onclick="deleteCustomer('${c.id}')">Delete</button></div></div></div>`;
   }).join('');
 }
 function filterCustomers(q){q=q.toLowerCase();$('customerList').innerHTML=customerRows(D.customers.filter(c=>(c.name+' '+(c.phone||'')).toLowerCase().includes(q)))}
@@ -265,23 +265,23 @@ function loanRow(l){
   const paidEmis=D.emis.filter(e=>e.loan_id===l.id&&e.status==='paid').length;
   const left=Math.max(0,Number(l.total_emis||0)-paidEmis);
   const out=Math.max(0,Number(l.principal_amount||0)-loanPaid(l.id));
-  return `<div class="item"><div style="flex:1"><b>${esc((D.banks.find(b=>b.id===l.bank_id)||{}).name||'Bank')} â ${esc(l.loan_name)}</b>
-  <div class="small">Loan ${money(l.principal_amount)} â¢ EMI ${money(l.emi_amount)} â¢ ${l.interest_rate?l.interest_rate+'% interest':''}</div>
-  <div class="small">${paidEmis}/${l.total_emis} paid â¢ ${left} remaining â¢ Outstanding ${money(out)}</div>
+  return `<div class="item"><div style="flex:1"><b>${esc((D.banks.find(b=>b.id===l.bank_id)||{}).name||'Bank')} &mdash; ${esc(l.loan_name)}</b>
+  <div class="small">Loan ${money(l.principal_amount)} &bull; EMI ${money(l.emi_amount)} &bull; ${l.interest_rate?l.interest_rate+'% interest':''}</div>
+  <div class="small">${paidEmis}/${l.total_emis} paid &bull; ${left} remaining &bull; Outstanding ${money(out)}</div>
   <div style="margin-top:7px"><button class="btn mini" onclick="openEdit('loan','${l.id}')">Edit</button> <button class="btn danger mini" onclick="deleteLoan('${l.id}')">Delete</button></div></div>
   <div class="right"><span class="pill ${left===0?'green':'blue'}">${left===0?'Paid':'Active'}</span>${left?`<br><button class="btn" style="padding:7px 9px;margin-top:6px" onclick="quickEMI('${l.id}')">Mark Paid</button>`:''}</div></div>`;
 }
 function emiRows(){
   const rows=D.emis.filter(e=>e.status!=='paid').slice(0,10);
   if(!rows.length)return '<div class="empty">No pending EMIs.</div>';
-  return rows.map(e=>{const l=D.loans.find(x=>x.id===e.loan_id);return `<div class="item"><div><b>${esc(l?.loan_name||'Loan')} â EMI #${e.emi_number}</b><div class="small">Due ${e.due_date}</div></div><div class="right"><b>${money(e.amount)}</b><br><button class="btn" style="padding:6px 8px;margin-top:5px" onclick="payEmi('${e.id}')">Mark Paid</button></div></div>`}).join('');
+  return rows.map(e=>{const l=D.loans.find(x=>x.id===e.loan_id);return `<div class="item"><div><b>${esc(l?.loan_name||'Loan')} &mdash; EMI #${e.emi_number}</b><div class="small">Due ${e.due_date}</div></div><div class="right"><b>${money(e.amount)}</b><br><button class="btn" style="padding:6px 8px;margin-top:5px" onclick="payEmi('${e.id}')">Mark Paid</button></div></div>`}).join('');
 }
-function cname(id){return (D.customers.find(c=>c.id===id)||{}).name||'â'}
+function cname(id){return (D.customers.find(c=>c.id===id)||{}).name||'&mdash;'}
 function txRows(n){
   if(!D.tx.length)return '<div class="empty">No transactions yet.</div>';
   return D.tx.slice(0,n).map(x=>{
     const plus=['money_received','udhar_recovered'].includes(x.transaction_type);
-    return `<div class="item"><div style="flex:1"><b>${esc(x.description||x.transaction_type)}</b><div class="small">${x.transaction_date} â¢ ${x.payment_method}${x.customer_id?' â¢ '+esc(cname(x.customer_id)):''}${x.loan_id?' â¢ '+esc((D.loans.find(l=>l.id===x.loan_id)||{}).loan_name||'Loan'):''}</div><div style="margin-top:6px"><button class="btn mini" onclick="openEdit('tx','${x.id}')">Edit</button> <button class="btn danger mini" onclick="deleteTransaction('${x.id}')">Delete</button></div></div><div class="right"><b class="${plus?'green':'red'}">${plus?'+':'-'}${money(x.amount)}</b><div class="small">${x.transaction_type}</div></div></div>`;
+    return `<div class="item"><div style="flex:1"><b>${esc(x.description||x.transaction_type)}</b><div class="small">${x.transaction_date} &bull; ${x.payment_method}${x.customer_id?' &bull; '+esc(cname(x.customer_id)):''}${x.loan_id?' &bull; '+esc((D.loans.find(l=>l.id===x.loan_id)||{}).loan_name||'Loan'):''}</div><div style="margin-top:6px"><button class="btn mini" onclick="openEdit('tx','${x.id}')">Edit</button> <button class="btn danger mini" onclick="deleteTransaction('${x.id}')">Delete</button></div></div><div class="right"><b class="${plus?'green':'red'}">${plus?'+':'-'}${money(x.amount)}</b><div class="small">${x.transaction_type}</div></div></div>`;
   }).join('');
 }
 function reports(rec,paid,given,recovered){
@@ -353,7 +353,7 @@ async function openEdit(t,id){
   if(t==='tx'){
     const cs=D.customers.map(c=>`<option value="${c.id}" ${c.id===obj.customer_id?'selected':''}>${esc(c.name)}</option>`).join('');
     const ls=D.loans.map(l=>`<option value="${l.id}" ${l.id===obj.loan_id?'selected':''}>${esc(l.loan_name)}</option>`).join('');
-    f=`<label>Type</label><select id="kind"><option value="money_received" ${obj.transaction_type==='money_received'?'selected':''}>Money Received</option><option value="money_paid" ${obj.transaction_type==='money_paid'?'selected':''}>Money Paid</option><option value="udhar_given" ${obj.transaction_type==='udhar_given'?'selected':''}>Udhar Given</option><option value="udhar_recovered" ${obj.transaction_type==='udhar_recovered'?'selected':''}>Udhar Recovered</option><option value="emi_paid" ${obj.transaction_type==='emi_paid'?'selected':''}>EMI Paid</option></select><label>Customer</label><select id="customer_id"><option value="">â Select â</option>${cs}</select><label>Loan</label><select id="loan_id"><option value="">â Select â</option>${ls}</select><label>Description</label><input id="desc" value="${esc(obj.description||'')}" required><div class="row"><div><label>Amount</label><input id="amt" type="number" min="0" value="${Number(obj.amount||0)}" required></div><div><label>Date</label><input id="date" type="date" value="${obj.transaction_date||today()}" required></div></div><label>Method</label><select id="method"><option value="cash" ${obj.payment_method==='cash'?'selected':''}>Cash</option><option value="bank" ${obj.payment_method==='bank'?'selected':''}>Bank</option><option value="upi" ${obj.payment_method==='upi'?'selected':''}>UPI</option></select>`;
+    f=`<label>Type</label><select id="kind"><option value="money_received" ${obj.transaction_type==='money_received'?'selected':''}>Money Received</option><option value="money_paid" ${obj.transaction_type==='money_paid'?'selected':''}>Money Paid</option><option value="udhar_given" ${obj.transaction_type==='udhar_given'?'selected':''}>Udhar Given</option><option value="udhar_recovered" ${obj.transaction_type==='udhar_recovered'?'selected':''}>Udhar Recovered</option><option value="emi_paid" ${obj.transaction_type==='emi_paid'?'selected':''}>EMI Paid</option></select><label>Customer</label><select id="customer_id"><option value="">&mdash; Select &mdash;</option>${cs}</select><label>Loan</label><select id="loan_id"><option value="">&mdash; Select &mdash;</option>${ls}</select><label>Description</label><input id="desc" value="${esc(obj.description||'')}" required><div class="row"><div><label>Amount</label><input id="amt" type="number" min="0" value="${Number(obj.amount||0)}" required></div><div><label>Date</label><input id="date" type="date" value="${obj.transaction_date||today()}" required></div></div><label>Method</label><select id="method"><option value="cash" ${obj.payment_method==='cash'?'selected':''}>Cash</option><option value="bank" ${obj.payment_method==='bank'?'selected':''}>Bank</option><option value="upi" ${obj.payment_method==='upi'?'selected':''}>UPI</option></select>`;
   }
   $('fields').innerHTML=f;
 }
@@ -367,7 +367,7 @@ async function openModal(t){
   let f='';
   if(t==='customer')f=`<label>Account</label><select id="account_type"><option value="personal">Personal</option><option value="business">Business</option></select><label>Name</label><input id="name" required><label>Phone</label><input id="phone"><label>Opening Udhar</label><input id="opening" type="number" min="0" value="0">`;
   if(t==='loan')f=`<label>Account</label><select id="account_type"><option value="personal">Personal</option><option value="business">Business</option></select><label>Bank / Finance Company</label><select id="bank_id"><option value="">+ New bank</option>${bs}</select><input id="newbank" placeholder="If new bank, enter name"><label>Loan Name</label><input id="lname" required placeholder="Personal / Equipment Loan"><label>Loan Number</label><input id="loan_number"><div class="row"><div><label>Loan Amount</label><input id="lamt" type="number" min="0" required></div><div><label>Monthly EMI</label><input id="emi" type="number" min="1" required></div></div><div class="row"><div><label>Total EMIs</label><input id="total" type="number" min="1" required></div><div><label>Interest %</label><input id="interest" type="number" step="0.001"></div></div><label>First EMI Date</label><input id="first" type="date" value="${today()}" required>`;
-  if(t==='tx')f=`<label>Type</label><select id="kind" onchange="changeTx()"><option value="money_received">Money Received</option><option value="money_paid">Money Paid</option><option value="udhar_given">Udhar Given</option><option value="udhar_recovered">Udhar Recovered</option><option value="emi_paid">EMI Paid</option></select><div id="personBox"><label>Customer</label><select id="customer_id"><option value="">â Select â</option>${cs}</select></div><div id="loanBox" style="display:none"><label>Loan</label><select id="loan_id"><option value="">â Select â</option>${ls}</select></div><label>Description</label><input id="desc" required><div class="row"><div><label>Amount</label><input id="amt" type="number" min="0" required></div><div><label>Date</label><input id="date" type="date" value="${today()}" required></div></div><label>Method</label><select id="method"><option value="cash">Cash</option><option value="bank">Bank</option><option value="upi">UPI</option></select>`;
+  if(t==='tx')f=`<label>Type</label><select id="kind" onchange="changeTx()"><option value="money_received">Money Received</option><option value="money_paid">Money Paid</option><option value="udhar_given">Udhar Given</option><option value="udhar_recovered">Udhar Recovered</option><option value="emi_paid">EMI Paid</option></select><div id="personBox"><label>Customer</label><select id="customer_id"><option value="">&mdash; Select &mdash;</option>${cs}</select></div><div id="loanBox" style="display:none"><label>Loan</label><select id="loan_id"><option value="">&mdash; Select &mdash;</option>${ls}</select></div><label>Description</label><input id="desc" required><div class="row"><div><label>Amount</label><input id="amt" type="number" min="0" required></div><div><label>Date</label><input id="date" type="date" value="${today()}" required></div></div><label>Method</label><select id="method"><option value="cash">Cash</option><option value="bank">Bank</option><option value="upi">UPI</option></select>`;
   $('fields').innerHTML=f;$('modal').dataset.type=t;
 }
 function changeTx(){const k=$('kind').value;$('personBox').style.display=k==='emi_paid'?'none':'block';$('loanBox').style.display=k==='emi_paid'?'block':'none'}
@@ -461,7 +461,7 @@ async function payEmi(emiId,amount,date,method,syncTx=true){
 }
 function notifyDue(){
   const todayD=new Date(today());
-  const due=D.emis.filter(e=>e.status!=='paid').slice(0,8).map(e=>`${e.due_date} â ${money(e.amount)} â EMI #${e.emi_number}`);
+  const due=D.emis.filter(e=>e.status!=='paid').slice(0,8).map(e=>`${e.due_date} &mdash; ${money(e.amount)} &mdash; EMI #${e.emi_number}`);
   alert(due.length?'Pending EMIs\n\n'+due.join('\n'):'No pending EMIs');
   requestNotify(false);
 }
