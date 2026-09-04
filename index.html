@@ -240,7 +240,7 @@ function render(p='dash'){ currentPage=p;
   if(p==='customers')$('app').innerHTML=`<input class="search" placeholder="Search customer..." oninput="filterCustomers(this.value)"><div id="customerList" class="card">${customerRows(D.customers)}</div>`;
   if(p==='loans')$('app').innerHTML=`<div class="actions"><button class="btn" onclick="openModal('loan')">+ Bank / Loan / EMI</button></div><div class="card">${D.loans.length?D.loans.map(loanRow).join(''):'<div class="empty">No loans added.</div>'}</div>`;
   if(p==='tx')$('app').innerHTML=`<div class="actions"><button class="btn" onclick="openModal('tx')">+ Transaction</button></div><div class="card">${txRows(200)}</div>`;
-  if(p==='reports')$('app').innerHTML=reports(rec,paid,given,recovered);
+  if(p==='reports'){ $('app').innerHTML=reports(rec,paid,given,recovered); reportView(); }
   if(p==='settings')$('app').innerHTML=
     `<div class="card"><div class="title">Settings</div>
     <label>Business / Account Name</label><input id="biz" value="${esc(D.settings.business)}">
@@ -285,16 +285,84 @@ function txRows(n){
   }).join('');
 }
 function reports(rec,paid,given,recovered){
-  const out=D.loans.reduce((a,l)=>a+Math.max(0,Number(l.principal_amount||0)-loanPaid(l.id)),0);
-  return `<div class="card"><div class="title">Overall Report</div>
-  <div class="kpi"><span>Money Received</span><b class="green">${money(rec)}</b></div>
-  <div class="kpi"><span>Money Paid</span><b class="red">${money(paid)}</b></div>
-  <div class="kpi"><span>Udhar Given</span><b>${money(given)}</b></div>
-  <div class="kpi"><span>Udhar Recovered</span><b class="green">${money(recovered)}</b></div>
-  <div class="kpi"><span>Pending Udhar</span><b class="orange">${money(Math.max(0,given-recovered))}</b></div>
-  <div class="kpi"><span>Loan Outstanding</span><b class="blue">${money(out)}</b></div>
-  <div class="kpi"><span>Monthly EMI</span><b>${money(D.loans.reduce((a,l)=>a+Number(l.emi_amount||0),0))}</b></div></div>
-  <div class="section"><button class="btn" onclick="exportCSV()">Export CSV</button></div>`;
+  return `<div class="card">
+    <div class="title">Reports & Analytics</div>
+    <div class="row">
+      <div><label>Period</label><select id="reportPeriod" onchange="reportView()">
+        <option value="all">All time</option><option value="today">Today</option><option value="month">This month</option><option value="year">This year</option><option value="custom">Custom range</option>
+      </select></div>
+      <div><label>Account</label><select id="reportAccount" onchange="reportView()"><option value="all">Personal + Business</option><option value="personal">Personal</option><option value="business">Business</option></select></div>
+    </div>
+    <div id="customReportDates" style="display:none" class="row">
+      <div><label>From</label><input id="reportFrom" type="date" onchange="reportView()"></div>
+      <div><label>To</label><input id="reportTo" type="date" onchange="reportView()"></div>
+    </div>
+  </div>
+  <div id="reportBody" class="section"></div>`;
+}
+function reportDateRange(){
+  const period=$('reportPeriod')?.value||'all', t=today();
+  let from='',to='';
+  if(period==='today'){from=t;to=t}
+  else if(period==='month'){from=t.slice(0,7)+'-01';to=t}
+  else if(period==='year'){from=t.slice(0,4)+'-01-01';to=t}
+  else if(period==='custom'){from=$('reportFrom')?.value||'';to=$('reportTo')?.value||''}
+  return {from,to};
+}
+function reportInRange(date,range){return (!range.from||date>=range.from)&&(!range.to||date<=range.to)}
+function reportView(){
+  const range=reportDateRange();
+  const account=$('reportAccount')?.value||'all';
+  const showCustom=$('customReportDates'); if(showCustom)showCustom.style.display=($('reportPeriod')?.value==='custom')?'grid':'none';
+  const tx=D.tx.filter(x=>(account==='all'||x.account_type===account)&&reportInRange(x.transaction_date,range));
+  const received=tx.filter(x=>['money_received','udhar_recovered'].includes(x.transaction_type)).reduce((a,x)=>a+Number(x.amount||0),0);
+  const paid=tx.filter(x=>['money_paid','udhar_given','emi_paid'].includes(x.transaction_type)).reduce((a,x)=>a+Number(x.amount||0),0);
+  const given=tx.filter(x=>x.transaction_type==='udhar_given').reduce((a,x)=>a+Number(x.amount||0),0);
+  const recovered=tx.filter(x=>x.transaction_type==='udhar_recovered').reduce((a,x)=>a+Number(x.amount||0),0);
+  const net=received-paid;
+  const accountLoans=D.loans.filter(l=>account==='all'||l.account_type===account);
+  const accountEmis=D.emis.filter(e=>accountLoans.some(l=>l.id===e.loan_id));
+  const outstanding=accountLoans.reduce((a,l)=>a+Math.max(0,Number(l.principal_amount||0)-loanPaid(l.id)),0);
+  const monthlyEmi=accountLoans.reduce((a,l)=>a+Number(l.emi_amount||0),0);
+  const pendingUdharAll=D.tx.filter(x=>(account==='all'||x.account_type===account));
+  const totalGivenAll=pendingUdharAll.filter(x=>x.transaction_type==='udhar_given').reduce((a,x)=>a+Number(x.amount||0),0);
+  const totalRecoveredAll=pendingUdharAll.filter(x=>x.transaction_type==='udhar_recovered').reduce((a,x)=>a+Number(x.amount||0),0);
+  const pendingUdhar=Math.max(0,totalGivenAll-totalRecoveredAll);
+  const paidEmis=accountEmis.filter(e=>e.status==='paid'&&reportInRange(e.paid_date||'',range));
+  const dueEmis=accountEmis.filter(e=>e.status!=='paid'&&reportInRange(e.due_date,range));
+
+  const customerMap={};
+  tx.filter(x=>['udhar_given','udhar_recovered'].includes(x.transaction_type)&&x.customer_id).forEach(x=>{
+    const id=x.customer_id; if(!customerMap[id])customerMap[id]={given:0,recovered:0};
+    customerMap[id][x.transaction_type==='udhar_given'?'given':'recovered']+=Number(x.amount||0);
+  });
+  const customerRowsReport=Object.entries(customerMap).sort((a,b)=>(b[1].given-b[1].recovered)-(a[1].given-a[1].recovered)).map(([id,v])=>`<div class="item"><div><b>${esc(cname(id))}</b><div class="small">Given ${money(v.given)} &bull; Recovered ${money(v.recovered)}</div></div><div class="right"><b class="orange">${money(Math.max(0,v.given-v.recovered))}</b><div class="small">pending</div></div></div>`).join('')||'<div class="empty">No udhar activity in selected period.</div>';
+
+  const bankRows={};
+  accountLoans.forEach(l=>{const b=(D.banks.find(x=>x.id===l.bank_id)||{}).name||'Bank'; if(!bankRows[b])bankRows[b]={loans:0,out:0,emi:0}; bankRows[b].loans++; bankRows[b].out+=Math.max(0,Number(l.principal_amount||0)-loanPaid(l.id)); bankRows[b].emi+=Number(l.emi_amount||0)});
+  const bankHtml=Object.entries(bankRows).sort((a,b)=>b[1].out-a[1].out).map(([name,v])=>`<div class="item"><div><b>${esc(name)}</b><div class="small">${v.loans} loan${v.loans===1?'':'s'} &bull; Monthly EMI ${money(v.emi)}</div></div><div class="right"><b class="blue">${money(v.out)}</b><div class="small">outstanding</div></div></div>`).join('')||'<div class="empty">No loans added.</div>';
+
+  const body=$('reportBody'); if(!body)return;
+  body.innerHTML=`<div class="grid">
+    <div class="card"><div class="label">Money Received</div><div class="num green">${money(received)}</div></div>
+    <div class="card"><div class="label">Money Paid</div><div class="num red">${money(paid)}</div></div>
+    <div class="card"><div class="label">Net Cash Flow</div><div class="num ${net>=0?'green':'red'}">${money(net)}</div></div>
+    <div class="card"><div class="label">Udhar in Period</div><div class="num orange">${money(Math.max(0,given-recovered))}</div></div>
+    <div class="card"><div class="label">Pending Udhar</div><div class="num orange">${money(pendingUdhar)}</div></div>
+    <div class="card"><div class="label">Loan Outstanding</div><div class="num blue">${money(outstanding)}</div></div>
+    <div class="card"><div class="label">Monthly EMI</div><div class="num blue">${money(monthlyEmi)}</div></div>
+    <div class="card"><div class="label">EMIs in Period</div><div class="num">${paidEmis.length+dueEmis.length}</div></div>
+  </div>
+  <div class="section"><div class="card"><div class="title">Customer-wise Udhar</div>${customerRowsReport}</div></div>
+  <div class="section"><div class="card"><div class="title">Bank-wise Loans</div>${bankHtml}</div></div>
+  <div class="section"><div class="card"><div class="title">EMI Status</div>
+    <div class="kpi"><span>Paid in period</span><b class="green">${paidEmis.length}</b></div>
+    <div class="kpi"><span>Pending / due in period</span><b class="orange">${dueEmis.length}</b></div>
+    <div class="kpi"><span>Paid EMI amount</span><b class="green">${money(paidEmis.reduce((a,e)=>a+Number(e.paid_amount||e.amount||0),0))}</b></div>
+    <div class="kpi"><span>Pending EMI amount</span><b class="orange">${money(dueEmis.reduce((a,e)=>a+Number(e.amount||0),0))}</b></div>
+  </div></div>
+  <div class="section"><div class="card"><div class="title">Payment Method Summary</div>${['cash','bank','upi'].map(m=>{const r=tx.filter(x=>x.payment_method===m&&['money_received','udhar_recovered'].includes(x.transaction_type)).reduce((a,x)=>a+Number(x.amount||0),0);const p=tx.filter(x=>x.payment_method===m&&['money_paid','udhar_given','emi_paid'].includes(x.transaction_type)).reduce((a,x)=>a+Number(x.amount||0),0);return `<div class="kpi"><span>${m.toUpperCase()}</span><span><b class="green">+${money(r)}</b> &nbsp; <b class="red">-${money(p)}</b></span></div>`}).join('')}</div></div>
+  <div class="section"><button class="btn" onclick="exportCSV()">Export All Transactions CSV</button></div>`;
 }
 
 
