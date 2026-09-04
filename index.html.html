@@ -1,0 +1,384 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#111318">
+<link rel="manifest" href="manifest.json">
+<title>Money Manager</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f4f5f7;color:#17181b;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+header{background:#111318;color:#fff;padding:18px 16px 14px;position:sticky;top:0;z-index:5}h1{margin:0;font-size:23px}.sub{font-size:12px;opacity:.7;margin-top:3px}
+.wrap{max-width:920px;margin:auto;padding:14px 14px 100px}.tabs{display:flex;gap:7px;overflow:auto;margin-bottom:13px}.tabs button{border:0;border-radius:10px;padding:10px 13px;white-space:nowrap;background:#e7e9ee}.tabs .on{background:#111318;color:#fff}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.card{background:#fff;border:1px solid #e5e6e9;border-radius:16px;padding:14px}.label{font-size:11px;color:#737780}.num{font-size:20px;font-weight:800;margin-top:4px}.green{color:#16803b}.red{color:#c0392b}.blue{color:#2867d8}.orange{color:#b76b00}
+.section{margin-top:17px}.title{font-size:17px;font-weight:800;margin-bottom:9px}.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0}.btn{border:0;border-radius:11px;padding:12px;background:#111318;color:#fff;font-weight:750}.btn.alt{background:#e7e9ee;color:#111318}.btn.warn{background:#fff0df;color:#9a5900}
+.item{display:flex;justify-content:space-between;gap:10px;padding:12px 0;border-bottom:1px solid #eee}.item:last-child{border:0}.small{font-size:11px;color:#737780;margin-top:3px}.right{text-align:right}.pill{display:inline-block;border-radius:20px;padding:4px 8px;font-size:10px;background:#edf2ff;color:#2867d8}.pill.red{background:#fff0f0;color:#c0392b}.pill.green{background:#edf8ef;color:#16803b}.pill.orange{background:#fff4e4;color:#b76b00}
+.search{width:100%;padding:12px;border:1px solid #ddd;border-radius:11px;font-size:15px;margin-bottom:9px}.empty{text-align:center;color:#777;padding:20px;font-size:13px}
+.modal{display:none;position:fixed;inset:0;background:#0008;z-index:10;align-items:flex-end}.sheet{background:#fff;width:100%;border-radius:20px 20px 0 0;padding:18px;max-height:94vh;overflow:auto}.close{float:right;border:0;border-radius:50%;width:32px;height:32px}.row{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+label{font-size:11px;color:#666}input,select{width:100%;padding:12px;border:1px solid #ddd;border-radius:10px;margin:5px 0 11px;font-size:15px}
+nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #ddd;display:flex;justify-content:space-around;padding:8px 5px calc(8px + env(safe-area-inset-bottom));z-index:7}nav button{border:0;background:none;font-size:11px;color:#666}.active{color:#2867d8!important;font-weight:800}
+.kpi{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid #eee}.kpi:last-child{border:0}
+#auth{min-height:100vh;background:#111318;color:#fff;padding:42px 20px;display:flex;align-items:center;justify-content:center}
+.authbox{width:100%;max-width:430px;background:#fff;color:#17181b;border-radius:20px;padding:24px}.authbox h2{margin:0 0 6px}.authbox p{color:#666;font-size:13px}.authbox input{margin-bottom:10px}.authbox .btn{width:100%;margin-top:5px}.authmsg{font-size:12px;margin-top:12px;min-height:18px}.userbar{font-size:11px;opacity:.75;margin-top:6px}
+@media(min-width:680px){.grid{grid-template-columns:repeat(4,1fr)}.actions{grid-template-columns:repeat(4,1fr)}}
+</style>
+</head>
+<body>
+
+<div id="auth">
+  <div class="authbox">
+    <h2>Money Manager</h2>
+    <p>Secure cloud account for customers, loans, EMIs, udhar and transactions.</p>
+    <label>Email</label><input id="authEmail" type="email" autocomplete="email" placeholder="you@example.com">
+    <label>Password</label><input id="authPassword" type="password" autocomplete="current-password" placeholder="Minimum 6 characters">
+    <button type="button" class="btn" onclick="signIn()">Login</button>
+    <button type="button" class="btn alt" style="width:100%;margin-top:8px" onclick="signUp()">Create account</button>
+    <div id="authMsg" class="authmsg">Connecting securely…</div>
+  </div>
+</div>
+
+<div id="appShell" style="display:none">
+<header>
+  <h1 id="appTitle">Money Manager</h1>
+  <div class="sub">Loans • EMIs • Customers • Udhar • Cash Flow</div>
+  <div class="userbar" id="userBar"></div>
+</header>
+<div class="wrap">
+  <div class="tabs">
+    <button class="on" onclick="go('dash',this)">Dashboard</button>
+    <button onclick="go('customers',this)">Customers</button>
+    <button onclick="go('loans',this)">Banks & Loans</button>
+    <button onclick="go('tx',this)">Transactions</button>
+    <button onclick="go('reports',this)">Reports</button>
+    <button onclick="go('settings',this)">Settings</button>
+  </div>
+  <div id="app"></div>
+</div>
+<nav>
+  <button class="active" onclick="go('dash')">⌂<br>Home</button>
+  <button onclick="openModal('customer')">👤<br>Customer</button>
+  <button onclick="openModal('loan')">💳<br>Loan/EMI</button>
+  <button onclick="openModal('tx')">＋<br>Transaction</button>
+  <button onclick="backup()">💾<br>Backup</button>
+</nav>
+</div>
+
+<div id="modal" class="modal" onclick="if(event.target===this)closeModal()">
+  <div class="sheet">
+    <button class="close" onclick="closeModal()">×</button>
+    <h2 id="mh">Add</h2>
+    <form id="form" onsubmit="saveForm(event)"><div id="fields"></div><button class="btn" style="width:100%">Save</button></form>
+  </div>
+</div>
+
+<input id="restore" type="file" accept=".json" style="display:none" onchange="restoreFile(event)">
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/dist/umd/supabase.min.js"></script>
+<script>
+const SUPABASE_URL="https://yqlcxztvdyehorhykgwc.supabase.co";
+const SUPABASE_KEY="sb_publishable_W5rirgN1NiEu5Syyn0fH_Q_U_WLx9UA";
+let sb=null;
+let USER=null;
+
+function setAuthMsg(t, ok=false){
+  const el=document.getElementById("authMsg");
+  if(el){el.textContent=t;el.style.color=ok?"#16803c":"#b42318";}
+}
+
+function initSupabase(){
+  try{
+    if(!window.supabase || typeof window.supabase.createClient!=="function"){
+      setAuthMsg("Secure connection library did not load. Please refresh the page.");
+      return false;
+    }
+    sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+    setAuthMsg("Ready — enter your email and password.", true);
+    return true;
+  }catch(err){
+    console.error(err);
+    setAuthMsg("Could not start secure connection. Please refresh the page.");
+    return false;
+  }
+}
+let D={customers:[],banks:[],loans:[],emis:[],tx:[],reminders:[],settings:{business:"Money Manager"}};
+
+const $=id=>document.getElementById(id);
+const money=n=>'₹'+Math.round(Number(n)||0).toLocaleString('en-IN');
+const today=()=>new Date().toISOString().slice(0,10);
+const esc=s=>String(s??'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
+
+async function signUp(){
+  try{
+    if(!sb) return setAuthMsg("Secure connection is not ready. Please refresh the page.");
+    const email=$('authEmail').value.trim();
+    const password=$('authPassword').value;
+    if(!email) return setAuthMsg("Please enter your email address.");
+    if(!/^\\S+@\\S+\\.\\S+$/.test(email)) return setAuthMsg("Please enter a valid email address.");
+    if(password.length<6) return setAuthMsg("Password must be at least 6 characters.");
+    setAuthMsg("Creating your account…", true);
+    const {data,error}=await sb.auth.signUp({
+      email,
+      password,
+      options:{emailRedirectTo:location.href}
+    });
+    if(error){
+      console.error(error);
+      return setAuthMsg(error.message || "Account creation failed.");
+    }
+    if(data && data.user && !data.session){
+      return setAuthMsg("Account created. Please check your email and confirm it, then come back and Login.", true);
+    }
+    setAuthMsg("Account created successfully. Opening Money Manager…", true);
+  }catch(err){
+    console.error(err);
+    setAuthMsg("Signup error: "+(err?.message || "Please refresh and try again."));
+  }
+}
+
+async function signIn(){
+  try{
+    if(!sb) return setAuthMsg("Secure connection is not ready. Please refresh the page.");
+    const email=$('authEmail').value.trim();
+    const password=$('authPassword').value;
+    if(!email||!password)return setAuthMsg("Enter email and password.");
+    setAuthMsg("Logging in…", true);
+    const {error}=await sb.auth.signInWithPassword({email,password});
+    if(error){
+      console.error(error);
+      return setAuthMsg(error.message || "Login failed.");
+    }
+  }catch(err){
+    console.error(err);
+    setAuthMsg("Login error: "+(err?.message || "Please refresh and try again."));
+  }
+}
+
+async function signOut(){
+  try{if(sb)await sb.auth.signOut();}catch(e){console.error(e)}
+  location.reload();
+}
+
+async function init(){
+  if(!initSupabase())return;
+  try{
+    const {data:{session},error}=await sb.auth.getSession();
+    if(error){
+      console.error(error);
+      return setAuthMsg(error.message || "Could not check login session.");
+    }
+    if(session){USER=session.user;await startApp();}
+    sb.auth.onAuthStateChange(async(_e,session)=>{
+      try{
+        if(session&&!USER){USER=session.user;await startApp();}
+        if(!session&&USER){USER=null;location.reload();}
+      }catch(err){console.error(err);setAuthMsg("Could not open your account data.");}
+    });
+  }catch(err){
+    console.error(err);
+    setAuthMsg("Secure connection error. Please refresh the page.");
+  }
+}
+
+async function startApp(){
+  $('auth').style.display='none';$('appShell').style.display='block';
+  $('userBar').textContent='Signed in: '+USER.email;
+  await loadCloud();
+  render('dash');
+}
+
+async function loadCloud(){
+  const uid=USER.id;
+  const [c,b,l,e,t,r]=await Promise.all([
+    sb.from('customers').select('*').eq('user_id',uid).order('created_at',{ascending:false}),
+    sb.from('banks').select('*').eq('user_id',uid).order('created_at',{ascending:false}),
+    sb.from('loans').select('*').eq('user_id',uid).order('created_at',{ascending:false}),
+    sb.from('emis').select('*').eq('user_id',uid).order('due_date',{ascending:true}),
+    sb.from('transactions').select('*').eq('user_id',uid).order('transaction_date',{ascending:false}).order('created_at',{ascending:false}),
+    sb.from('reminders').select('*').eq('user_id',uid).order('reminder_date',{ascending:true})
+  ]);
+  if(c.error||b.error||l.error||e.error||t.error||r.error){
+    alert('Cloud data load error. Please check Supabase tables/policies.');
+    console.error(c.error,b.error,l.error,e.error,t.error,r.error);return;
+  }
+  D.customers=c.data||[];D.banks=b.data||[];D.loans=l.data||[];D.emis=e.data||[];D.tx=t.data||[];D.reminders=r.data||[];
+  D.settings=JSON.parse(localStorage.getItem('mm_settings')||'{"business":"Money Manager"}');
+  $('appTitle').textContent=D.settings.business||'Money Manager';
+}
+
+async function insert(table,row){const {data,error}=await sb.from(table).insert({...row,user_id:USER.id}).select().single();if(error)throw error;return data}
+async function update(table,id,patch){const {error}=await sb.from(table).update(patch).eq('id',id).eq('user_id',USER.id);if(error)throw error}
+
+function go(p,b){document.querySelectorAll('.tabs button').forEach(x=>x.classList.remove('on'));if(b)b.classList.add('on');render(p)}
+
+function render(p='dash'){
+  const rec=D.tx.filter(x=>['money_received','udhar_recovered','emi_paid'].includes(x.transaction_type)).reduce((a,x)=>a+Number(x.amount||0),0);
+  const paid=D.tx.filter(x=>['money_paid','emi_paid'].includes(x.transaction_type)).reduce((a,x)=>a+Number(x.amount||0),0);
+  const given=D.tx.filter(x=>x.transaction_type==='udhar_given').reduce((a,x)=>a+Number(x.amount||0),0);
+  const recovered=D.tx.filter(x=>x.transaction_type==='udhar_recovered').reduce((a,x)=>a+Number(x.amount||0),0);
+  if(p==='dash')$('app').innerHTML=
+    `<div class="grid">
+      <div class="card"><div class="label">Money Received</div><div class="num green">${money(rec)}</div></div>
+      <div class="card"><div class="label">Money Paid</div><div class="num red">${money(paid)}</div></div>
+      <div class="card"><div class="label">Pending Udhar</div><div class="num orange">${money(Math.max(0,given-recovered))}</div></div>
+      <div class="card"><div class="label">Monthly EMI</div><div class="num blue">${money(D.loans.reduce((a,l)=>a+Number(l.emi_amount||0),0))}</div></div>
+    </div>
+    <div class="actions">
+      <button class="btn" onclick="openModal('customer')">+ Customer</button>
+      <button class="btn" onclick="openModal('loan')">+ Bank / Loan</button>
+      <button class="btn alt" onclick="openModal('tx')">+ Transaction</button>
+      <button class="btn warn" onclick="notifyDue()">🔔 Check Reminders</button>
+    </div>
+    <div class="section"><div class="title">EMI Schedule</div><div class="card">${emiRows()}</div></div>
+    <div class="section"><div class="title">Recent Activity</div><div class="card">${txRows(8)}</div></div>`;
+  if(p==='customers')$('app').innerHTML=`<input class="search" placeholder="Search customer..." oninput="filterCustomers(this.value)"><div id="customerList" class="card">${customerRows(D.customers)}</div>`;
+  if(p==='loans')$('app').innerHTML=`<div class="actions"><button class="btn" onclick="openModal('loan')">+ Bank / Loan / EMI</button></div><div class="card">${D.loans.length?D.loans.map(loanRow).join(''):'<div class="empty">No loans added.</div>'}</div>`;
+  if(p==='tx')$('app').innerHTML=`<div class="actions"><button class="btn" onclick="openModal('tx')">+ Transaction</button></div><div class="card">${txRows(200)}</div>`;
+  if(p==='reports')$('app').innerHTML=reports(rec,paid,given,recovered);
+  if(p==='settings')$('app').innerHTML=
+    `<div class="card"><div class="title">Settings</div>
+    <label>Business / Account Name</label><input id="biz" value="${esc(D.settings.business)}">
+    <button class="btn" onclick="setBiz()">Save Name</button><hr>
+    <button class="btn alt" onclick="requestNotify()">Enable Notifications</button><br><br>
+    <button class="btn alt" onclick="backup()">Export Backup</button><br><br>
+    <button class="btn alt" onclick="document.getElementById('restore').click()">Restore Local Backup</button><br><br>
+    <button class="btn" onclick="signOut()">Logout</button>
+    <p class="small">Cloud sync is active. Local settings/backups are also available.</p></div>`;
+}
+function customerRows(a){
+  if(!a.length)return '<div class="empty">No customers.</div>';
+  return a.map(c=>{
+    const g=D.tx.filter(x=>x.customer_id===c.id&&x.transaction_type==='udhar_given').reduce((a,x)=>a+Number(x.amount||0),0);
+    const r=D.tx.filter(x=>x.customer_id===c.id&&x.transaction_type==='udhar_recovered').reduce((a,x)=>a+Number(x.amount||0),0);
+    return `<div class="item"><div><b>${esc(c.name)}</b><div class="small">${esc(c.phone||'No phone')} • ${D.tx.filter(x=>x.customer_id===c.id).length} entries</div></div><div class="right"><b>${money(Math.max(0,g-r))}</b><div class="small">pending</div></div></div>`;
+  }).join('');
+}
+function filterCustomers(q){q=q.toLowerCase();$('customerList').innerHTML=customerRows(D.customers.filter(c=>(c.name+' '+(c.phone||'')).toLowerCase().includes(q)))}
+function loanPaid(id){return D.emis.filter(e=>e.loan_id===id&&e.status==='paid').reduce((a,e)=>a+Number(e.paid_amount||e.amount||0),0)}
+function loanRow(l){
+  const paidEmis=D.emis.filter(e=>e.loan_id===l.id&&e.status==='paid').length;
+  const left=Math.max(0,Number(l.total_emis||0)-paidEmis);
+  const out=Math.max(0,Number(l.principal_amount||0)-loanPaid(l.id));
+  return `<div class="item"><div><b>${esc((D.banks.find(b=>b.id===l.bank_id)||{}).name||'Bank')} — ${esc(l.loan_name)}</b>
+  <div class="small">Loan ${money(l.principal_amount)} • EMI ${money(l.emi_amount)} • ${l.interest_rate?l.interest_rate+'% interest':''}</div>
+  <div class="small">${paidEmis}/${l.total_emis} paid • ${left} remaining • Outstanding ${money(out)}</div></div>
+  <div class="right"><span class="pill ${left===0?'green':'blue'}">${left===0?'Paid':'Active'}</span>${left?`<br><button class="btn" style="padding:7px 9px;margin-top:6px" onclick="quickEMI('${l.id}')">Mark Paid</button>`:''}</div></div>`;
+}
+function emiRows(){
+  const rows=D.emis.filter(e=>e.status!=='paid').slice(0,10);
+  if(!rows.length)return '<div class="empty">No pending EMIs.</div>';
+  return rows.map(e=>{const l=D.loans.find(x=>x.id===e.loan_id);return `<div class="item"><div><b>${esc(l?.loan_name||'Loan')} — EMI #${e.emi_number}</b><div class="small">Due ${e.due_date}</div></div><div class="right"><b>${money(e.amount)}</b><br><button class="btn" style="padding:6px 8px;margin-top:5px" onclick="payEmi('${e.id}')">Mark Paid</button></div></div>`}).join('');
+}
+function cname(id){return (D.customers.find(c=>c.id===id)||{}).name||'—'}
+function txRows(n){
+  if(!D.tx.length)return '<div class="empty">No transactions yet.</div>';
+  return D.tx.slice(0,n).map(x=>{
+    const plus=['money_received','udhar_recovered'].includes(x.transaction_type);
+    return `<div class="item"><div><b>${esc(x.description||x.transaction_type)}</b><div class="small">${x.transaction_date} • ${x.payment_method}${x.customer_id?' • '+esc(cname(x.customer_id)):''}</div></div><div class="right"><b class="${plus?'green':'red'}">${plus?'+':'-'}${money(x.amount)}</b><div class="small">${x.transaction_type}</div></div></div>`;
+  }).join('');
+}
+function reports(rec,paid,given,recovered){
+  const out=D.loans.reduce((a,l)=>a+Math.max(0,Number(l.principal_amount||0)-loanPaid(l.id)),0);
+  return `<div class="card"><div class="title">Overall Report</div>
+  <div class="kpi"><span>Money Received</span><b class="green">${money(rec)}</b></div>
+  <div class="kpi"><span>Money Paid</span><b class="red">${money(paid)}</b></div>
+  <div class="kpi"><span>Udhar Given</span><b>${money(given)}</b></div>
+  <div class="kpi"><span>Udhar Recovered</span><b class="green">${money(recovered)}</b></div>
+  <div class="kpi"><span>Pending Udhar</span><b class="orange">${money(Math.max(0,given-recovered))}</b></div>
+  <div class="kpi"><span>Loan Outstanding</span><b class="blue">${money(out)}</b></div>
+  <div class="kpi"><span>Monthly EMI</span><b>${money(D.loans.reduce((a,l)=>a+Number(l.emi_amount||0),0))}</b></div></div>
+  <div class="section"><button class="btn" onclick="exportCSV()">Export CSV</button></div>`;
+}
+
+async function openModal(t){
+  $('modal').style.display='flex';
+  $('mh').textContent=t==='customer'?'Add Customer':t==='loan'?'Add Bank / Loan / EMI':'Add Transaction';
+  let cs=D.customers.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('');
+  let bs=D.banks.map(b=>`<option value="${b.id}">${esc(b.name)}</option>`).join('');
+  let ls=D.loans.map(l=>`<option value="${l.id}">${esc(l.loan_name)}</option>`).join('');
+  let f='';
+  if(t==='customer')f=`<label>Account</label><select id="account_type"><option value="personal">Personal</option><option value="business">Business</option></select><label>Name</label><input id="name" required><label>Phone</label><input id="phone"><label>Opening Udhar</label><input id="opening" type="number" min="0" value="0">`;
+  if(t==='loan')f=`<label>Account</label><select id="account_type"><option value="personal">Personal</option><option value="business">Business</option></select><label>Bank / Finance Company</label><select id="bank_id"><option value="">+ New bank</option>${bs}</select><input id="newbank" placeholder="If new bank, enter name"><label>Loan Name</label><input id="lname" required placeholder="Personal / Equipment Loan"><label>Loan Number</label><input id="loan_number"><div class="row"><div><label>Loan Amount</label><input id="lamt" type="number" min="0" required></div><div><label>Monthly EMI</label><input id="emi" type="number" min="1" required></div></div><div class="row"><div><label>Total EMIs</label><input id="total" type="number" min="1" required></div><div><label>Interest %</label><input id="interest" type="number" step="0.001"></div></div><label>First EMI Date</label><input id="first" type="date" value="${today()}" required>`;
+  if(t==='tx')f=`<label>Type</label><select id="kind" onchange="changeTx()"><option value="money_received">Money Received</option><option value="money_paid">Money Paid</option><option value="udhar_given">Udhar Given</option><option value="udhar_recovered">Udhar Recovered</option><option value="emi_paid">EMI Paid</option></select><div id="personBox"><label>Customer</label><select id="customer_id"><option value="">— Select —</option>${cs}</select></div><div id="loanBox" style="display:none"><label>Loan</label><select id="loan_id"><option value="">— Select —</option>${ls}</select></div><label>Description</label><input id="desc" required><div class="row"><div><label>Amount</label><input id="amt" type="number" min="0" required></div><div><label>Date</label><input id="date" type="date" value="${today()}" required></div></div><label>Method</label><select id="method"><option value="cash">Cash</option><option value="bank">Bank</option><option value="upi">UPI</option></select>`;
+  $('fields').innerHTML=f;$('modal').dataset.type=t;
+}
+function changeTx(){const k=$('kind').value;$('personBox').style.display=k==='emi_paid'?'none':'block';$('loanBox').style.display=k==='emi_paid'?'block':'none'}
+function closeModal(){$('modal').style.display='none'}
+
+async function saveForm(e){
+  e.preventDefault();const t=$('modal').dataset.type;
+  try{
+    if(t==='customer'){
+      const c=await insert('customers',{account_type:$('account_type').value,name:$('name').value.trim(),phone:$('phone').value.trim()});
+      D.customers.unshift(c);
+      const opening=Number($('opening').value)||0;
+      if(opening)D.tx.unshift(await insert('transactions',{account_type:$('account_type').value,customer_id:c.id,transaction_type:'udhar_given',amount:opening,payment_method:'cash',description:'Opening Udhar',transaction_date:today()}));
+    }
+    if(t==='loan'){
+      let bankId=$('bank_id').value;
+      if(!bankId){
+        const bank=await insert('banks',{name:$('newbank').value.trim()||'Other'});
+        D.banks.unshift(bank);bankId=bank.id;
+      }
+      const l=await insert('loans',{bank_id:bankId,account_type:$('account_type').value,loan_name:$('lname').value.trim(),loan_number:$('loan_number').value.trim(),principal_amount:Number($('lamt').value)||0,outstanding_amount:Number($('lamt').value)||0,emi_amount:Number($('emi').value)||0,total_emis:Number($('total').value)||0,start_date:$('first').value,interest_rate:Number($('interest').value)||null});
+      D.loans.unshift(l);
+      let d=new Date($('first').value+'T00:00:00');
+      for(let i=1;i<=l.total_emis;i++){
+        const due=d.toISOString().slice(0,10);
+        const em=await insert('emis',{loan_id:l.id,emi_number:i,due_date:due,amount:l.emi_amount,status:'pending'});
+        D.emis.push(em);d.setMonth(d.getMonth()+1);
+      }
+    }
+    if(t==='tx'){
+      const tx=await insert('transactions',{account_type:'personal',customer_id:$('customer_id')?.value||null,loan_id:$('loan_id')?.value||null,transaction_type:$('kind').value,amount:Number($('amt').value)||0,payment_method:$('method').value,description:$('desc').value.trim(),transaction_date:$('date').value});
+      D.tx.unshift(tx);
+      if(tx.transaction_type==='emi_paid'&&tx.loan_id){
+        const pending=D.emis.find(x=>x.loan_id===tx.loan_id&&x.status!=='paid');
+        if(pending)await payEmi(pending.id,tx.amount,tx.transaction_date,tx.payment_method,false);
+      }
+    }
+    closeModal();render('dash');
+  }catch(err){alert('Save failed: '+(err.message||err));}
+}
+
+async function quickEMI(loanId){
+  const e=D.emis.find(x=>x.loan_id===loanId&&x.status!=='paid');if(e)await payEmi(e.id);
+}
+async function payEmi(emiId,amount,date,method,syncTx=true){
+  const e=D.emis.find(x=>x.id===emiId);if(!e||e.status==='paid')return;
+  const amt=Number(amount||e.amount),dt=date||today(),pm=method||'bank';
+  try{
+    await update('emis',e.id,{status:'paid',paid_amount:amt,paid_date:dt,payment_method:pm});
+    e.status='paid';e.paid_amount=amt;e.paid_date=dt;e.payment_method=pm;
+    if(syncTx){
+      const tx=await insert('transactions',{account_type:'personal',loan_id:e.loan_id,transaction_type:'emi_paid',amount:amt,payment_method:pm,description:'EMI #'+e.emi_number+' paid',transaction_date:dt});
+      D.tx.unshift(tx);
+    }
+    render('dash');
+  }catch(err){alert('EMI update failed: '+(err.message||err));}
+}
+function notifyDue(){
+  const todayD=new Date(today());
+  const due=D.emis.filter(e=>e.status!=='paid').slice(0,8).map(e=>`${e.due_date} — ${money(e.amount)} — EMI #${e.emi_number}`);
+  alert(due.length?'Pending EMIs\n\n'+due.join('\n'):'No pending EMIs');
+  requestNotify(false);
+}
+async function requestNotify(show=true){
+  if(!('Notification'in window)){if(show)alert('Notifications are not supported in this browser.');return}
+  const p=await Notification.requestPermission();if(show)alert(p==='granted'?'Notifications enabled.':'Notification permission not granted.');
+}
+function setBiz(){D.settings.business=$('biz').value.trim()||'Money Manager';localStorage.setItem('mm_settings',JSON.stringify(D.settings));$('appTitle').textContent=D.settings.business;render('settings')}
+function backup(){
+  const payload={exported_at:new Date().toISOString(),customers:D.customers,banks:D.banks,loans:D.loans,emis:D.emis,tx:D.tx,reminders:D.reminders,settings:D.settings};
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(payload,null,2)],{type:'application/json'}));a.download='money-manager-cloud-backup-'+today()+'.json';a.click();
+}
+function restoreFile(e){alert('Cloud restore is intentionally disabled in this version to prevent accidental overwrites. Use the exported backup as a safe archive.')}
+function exportCSV(){
+  const rows=[['Date','Type','Description','Customer','Amount','Method'],...D.tx.map(x=>[x.transaction_date,x.transaction_type,x.description||'',cname(x.customer_id),x.amount,x.payment_method])];
+  const csv=rows.map(r=>r.map(v=>'"'+String(v).replaceAll('"','""')+'"').join(',')).join('\n');
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='transactions-'+today()+'.csv';a.click();
+}
+if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+init();
+</script>
+</body>
+</html>
