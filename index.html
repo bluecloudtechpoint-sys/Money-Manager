@@ -11,7 +11,7 @@
 header{background:#111318;color:#fff;padding:18px 16px 14px;position:sticky;top:0;z-index:5}h1{margin:0;font-size:23px}.sub{font-size:12px;opacity:.7;margin-top:3px}
 .wrap{max-width:920px;margin:auto;padding:14px 14px 100px}.tabs{display:flex;gap:7px;overflow:auto;margin-bottom:13px}.tabs button{border:0;border-radius:10px;padding:10px 13px;white-space:nowrap;background:#e7e9ee}.tabs .on{background:#111318;color:#fff}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.card{background:#fff;border:1px solid #e5e6e9;border-radius:16px;padding:14px}.label{font-size:11px;color:#737780}.num{font-size:20px;font-weight:800;margin-top:4px}.green{color:#16803b}.red{color:#c0392b}.blue{color:#2867d8}.orange{color:#b76b00}
-.section{margin-top:17px}.title{font-size:17px;font-weight:800;margin-bottom:9px}.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0}.btn{border:0;border-radius:11px;padding:12px;background:#111318;color:#fff;font-weight:750}.btn.alt{background:#e7e9ee;color:#111318}.btn.warn{background:#fff0df;color:#9a5900}
+.section{margin-top:17px}.title{font-size:17px;font-weight:800;margin-bottom:9px}.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0}.btn{border:0;border-radius:11px;padding:12px;background:#111318;color:#fff;font-weight:750}.btn.alt{background:#e7e9ee;color:#111318}.btn.warn{background:#fff0df;color:#9a5900}.btn.danger{background:#fff0f0;color:#c0392b}.mini{font-size:11px;padding:6px 8px;border-radius:8px}
 .item{display:flex;justify-content:space-between;gap:10px;padding:12px 0;border-bottom:1px solid #eee}.item:last-child{border:0}.small{font-size:11px;color:#737780;margin-top:3px}.right{text-align:right}.pill{display:inline-block;border-radius:20px;padding:4px 8px;font-size:10px;background:#edf2ff;color:#2867d8}.pill.red{background:#fff0f0;color:#c0392b}.pill.green{background:#edf8ef;color:#16803b}.pill.orange{background:#fff4e4;color:#b76b00}
 .search{width:100%;padding:12px;border:1px solid #ddd;border-radius:11px;font-size:15px;margin-bottom:9px}.empty{text-align:center;color:#777;padding:20px;font-size:13px}
 .modal{display:none;position:fixed;inset:0;background:#0008;z-index:10;align-items:flex-end}.sheet{background:#fff;width:100%;border-radius:20px 20px 0 0;padding:18px;max-height:94vh;overflow:auto}.close{float:right;border:0;border-radius:50%;width:32px;height:32px}.row{display:grid;grid-template-columns:1fr 1fr;gap:9px}
@@ -21,13 +21,6 @@ nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid 
 #auth{min-height:100vh;background:#111318;color:#fff;padding:42px 20px;display:flex;align-items:center;justify-content:center}
 .authbox{width:100%;max-width:430px;background:#fff;color:#17181b;border-radius:20px;padding:24px}.authbox h2{margin:0 0 6px}.authbox p{color:#666;font-size:13px}.authbox input{margin-bottom:10px}.authbox .btn{width:100%;margin-top:5px}.authmsg{font-size:12px;margin-top:12px;min-height:18px}.userbar{font-size:11px;opacity:.75;margin-top:6px}
 @media(min-width:680px){.grid{grid-template-columns:repeat(4,1fr)}.actions{grid-template-columns:repeat(4,1fr)}}
-
-.row-actions{display:flex;gap:5px;justify-content:flex-end;flex-wrap:wrap;margin-top:7px}
-.mini{border:0;border-radius:8px;padding:6px 9px;background:#e7e9ee;color:#111318;font-weight:750;font-size:11px}
-.mini.danger{background:#ffe7e5;color:#b42318}
-.item-main{min-width:0;flex:1}
-.bank-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
-hr{border:0;border-top:1px solid #eee;margin:14px 0}
 </style>
 </head>
 <body>
@@ -40,14 +33,14 @@ hr{border:0;border-top:1px solid #eee;margin:14px 0}
     <label>Password</label><input id="authPassword" type="password" autocomplete="current-password" placeholder="Minimum 6 characters">
     <button type="button" class="btn" onclick="signIn()">Login</button>
     <button type="button" class="btn alt" style="width:100%;margin-top:8px" onclick="signUp()">Create account</button>
-    <div id="authMsg" class="authmsg">Connecting securely…</div>
+    <div id="authMsg" class="authmsg">Connecting securelyâ¦</div>
   </div>
 </div>
 
 <div id="appShell" style="display:none">
 <header>
   <h1 id="appTitle">Money Manager</h1>
-  <div class="sub">Loans • EMIs • Customers • Udhar • Cash Flow</div>
+  <div class="sub">Loans â¢ EMIs â¢ Customers â¢ Udhar â¢ Cash Flow</div>
   <div class="userbar" id="userBar"></div>
 </header>
 <div class="wrap">
@@ -56,24 +49,23 @@ hr{border:0;border-top:1px solid #eee;margin:14px 0}
     <button onclick="go('customers',this)">Customers</button>
     <button onclick="go('loans',this)">Banks & Loans</button>
     <button onclick="go('tx',this)">Transactions</button>
-    <button onclick="go('reminders',this)">Reminders</button>
     <button onclick="go('reports',this)">Reports</button>
     <button onclick="go('settings',this)">Settings</button>
   </div>
   <div id="app"></div>
 </div>
 <nav>
-  <button class="active" onclick="go('dash')">⌂<br>Home</button>
-  <button onclick="openModal('customer')">👤<br>Customer</button>
-  <button onclick="openModal('loan')">💳<br>Loan/EMI</button>
-  <button onclick="openModal('tx')">＋<br>Transaction</button>
-  <button onclick="backup()">💾<br>Backup</button>
+  <button class="active" onclick="go('dash')">â<br>Home</button>
+  <button onclick="openModal('customer')">ð¤<br>Customer</button>
+  <button onclick="openModal('loan')">ð³<br>Loan/EMI</button>
+  <button onclick="openModal('tx')">ï¼<br>Transaction</button>
+  <button onclick="backup()">ð¾<br>Backup</button>
 </nav>
 </div>
 
 <div id="modal" class="modal" onclick="if(event.target===this)closeModal()">
   <div class="sheet">
-    <button class="close" onclick="closeModal()">×</button>
+    <button class="close" onclick="closeModal()">Ã</button>
     <h2 id="mh">Add</h2>
     <form id="form" onsubmit="saveForm(event)"><div id="fields"></div><button class="btn" style="width:100%">Save</button></form>
   </div>
@@ -100,7 +92,7 @@ function initSupabase(){
       return false;
     }
     sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
-    setAuthMsg("Ready — enter your email and password.", true);
+    setAuthMsg("Ready â enter your email and password.", true);
     return true;
   }catch(err){
     console.error(err);
@@ -111,7 +103,7 @@ function initSupabase(){
 let D={customers:[],banks:[],loans:[],emis:[],tx:[],reminders:[],settings:{business:"Money Manager"}};
 
 const $=id=>document.getElementById(id);
-const money=n=>'₹'+Math.round(Number(n)||0).toLocaleString('en-IN');
+const money=n=>'â¹'+Math.round(Number(n)||0).toLocaleString('en-IN');
 const today=()=>new Date().toISOString().slice(0,10);
 const esc=s=>String(s??'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
 
@@ -123,7 +115,7 @@ async function signUp(){
     if(!email) return setAuthMsg("Please enter your email address.");
     if(!email.includes("@") || !email.includes(".")) return setAuthMsg("Please enter a valid email address.");
     if(password.length<6) return setAuthMsg("Password must be at least 6 characters.");
-    setAuthMsg("Creating your account…", true);
+    setAuthMsg("Creating your accountâ¦", true);
     const {data,error}=await sb.auth.signUp({
       email,
       password,
@@ -136,7 +128,7 @@ async function signUp(){
     if(data && data.user && !data.session){
       return setAuthMsg("Account created. Please check your email and confirm it, then come back and Login.", true);
     }
-    setAuthMsg("Account created successfully. Opening Money Manager…", true);
+    setAuthMsg("Account created successfully. Opening Money Managerâ¦", true);
   }catch(err){
     console.error(err);
     setAuthMsg("Signup error: "+(err?.message || "Please refresh and try again."));
@@ -149,7 +141,7 @@ async function signIn(){
     const email=$('authEmail').value.trim();
     const password=$('authPassword').value;
     if(!email||!password)return setAuthMsg("Enter email and password.");
-    setAuthMsg("Logging in…", true);
+    setAuthMsg("Logging inâ¦", true);
     const {error}=await sb.auth.signInWithPassword({email,password});
     if(error){
       console.error(error);
@@ -216,57 +208,39 @@ async function loadCloud(){
 async function insert(table,row){const {data,error}=await sb.from(table).insert({...row,user_id:USER.id}).select().single();if(error)throw error;return data}
 async function update(table,id,patch){const {error}=await sb.from(table).update(patch).eq('id',id).eq('user_id',USER.id);if(error)throw error}
 
-function go(p,b){document.querySelectorAll('.tabs button').forEach(x=>x.classList.remove('on'));if(b)b.classList.add('on');render(p)}
+let currentPage='dash';
+function go(p,b){currentPage=p;document.querySelectorAll('.tabs button').forEach(x=>x.classList.remove('on'));if(b)b.classList.add('on');render(p)}
 
-function render(p='dash'){
+function render(p='dash'){ currentPage=p;
+  // Cash-flow accounting:
+  // Money Received = actual money coming in (normal receipts + udhar recovery).
+  // Money Paid = actual money going out (normal payments + udhar given + EMI payments).
+  // EMI payments are NOT counted as money received.
   const rec=D.tx.filter(x=>['money_received','udhar_recovered'].includes(x.transaction_type)).reduce((a,x)=>a+Number(x.amount||0),0);
-  const paid=D.tx.filter(x=>['money_paid','emi_paid'].includes(x.transaction_type)).reduce((a,x)=>a+Number(x.amount||0),0);
+  const paid=D.tx.filter(x=>['money_paid','udhar_given','emi_paid'].includes(x.transaction_type)).reduce((a,x)=>a+Number(x.amount||0),0);
   const given=D.tx.filter(x=>x.transaction_type==='udhar_given').reduce((a,x)=>a+Number(x.amount||0),0);
   const recovered=D.tx.filter(x=>x.transaction_type==='udhar_recovered').reduce((a,x)=>a+Number(x.amount||0),0);
-
   if(p==='dash')$('app').innerHTML=
     `<div class="grid">
       <div class="card"><div class="label">Money Received</div><div class="num green">${money(rec)}</div></div>
       <div class="card"><div class="label">Money Paid</div><div class="num red">${money(paid)}</div></div>
       <div class="card"><div class="label">Pending Udhar</div><div class="num orange">${money(Math.max(0,given-recovered))}</div></div>
       <div class="card"><div class="label">Monthly EMI</div><div class="num blue">${money(D.loans.reduce((a,l)=>a+Number(l.emi_amount||0),0))}</div></div>
+      <div class="card"><div class="label">Net Cash Flow</div><div class="num ${rec-paid>=0?'green':'red'}">${money(rec-paid)}</div></div>
     </div>
     <div class="actions">
       <button class="btn" onclick="openModal('customer')">+ Customer</button>
       <button class="btn" onclick="openModal('loan')">+ Bank / Loan</button>
       <button class="btn alt" onclick="openModal('tx')">+ Transaction</button>
-      <button class="btn warn" onclick="notifyDue()">🔔 Check Reminders</button>
+      <button class="btn warn" onclick="notifyDue()">ð Check Reminders</button>
     </div>
     <div class="section"><div class="title">EMI Schedule</div><div class="card">${emiRows()}</div></div>
-    <div class="section"><div class="title">Recent Activity</div><div class="card">${txRows(8)}</div></div>`;
-
-  if(p==='customers')$('app').innerHTML=
-    `<div class="actions"><button class="btn" onclick="openModal('customer')">+ Customer</button></div>
-     <input class="search" placeholder="Search customer..." oninput="filterCustomers(this.value)">
-     <div id="customerList" class="card">${customerRows(D.customers)}</div>`;
-
-  if(p==='loans')$('app').innerHTML=
-    `<div class="actions"><button class="btn" onclick="openModal('loan')">+ Bank / Loan / EMI</button><button class="btn alt" onclick="openModal('bank')">+ Bank / Finance Company</button></div>
-     <div class="section"><div class="title">Banks / Finance Companies</div>
-       <div class="card">${bankRows()}</div>
-     </div>
-     <div class="section"><div class="title">Loans</div>
-       <div class="card">${D.loans.length?D.loans.map(loanRow).join(''):'<div class="empty">No loans added.</div>'}</div>
-     </div>
-     <div class="section"><div class="title">EMI Records</div>
-       <div class="card">${emiAllRows()}</div>
-     </div>`;
-
-  if(p==='tx')$('app').innerHTML=
-    `<div class="actions"><button class="btn" onclick="openModal('tx')">+ Transaction</button></div>
-     <div class="card">${txRows(200)}</div>`;
-
-  if(p==='reminders')$('app').innerHTML=
-    `<div class="actions"><button class="btn" onclick="openModal('reminder')">+ Reminder</button></div>
-     <div class="card">${reminderRows()}</div>`;
-
+    <div class="section"><div class="title">Recent Activity</div><div class="card">${txRows(8)}</div></div>
+    <div class="section"><div class="card"><b>Cash-flow rule:</b> EMI paid and Udhar given are money out; Udhar recovered is money in.</div></div>`;
+  if(p==='customers')$('app').innerHTML=`<input class="search" placeholder="Search customer..." oninput="filterCustomers(this.value)"><div id="customerList" class="card">${customerRows(D.customers)}</div>`;
+  if(p==='loans')$('app').innerHTML=`<div class="actions"><button class="btn" onclick="openModal('loan')">+ Bank / Loan / EMI</button></div><div class="card">${D.loans.length?D.loans.map(loanRow).join(''):'<div class="empty">No loans added.</div>'}</div>`;
+  if(p==='tx')$('app').innerHTML=`<div class="actions"><button class="btn" onclick="openModal('tx')">+ Transaction</button></div><div class="card">${txRows(200)}</div>`;
   if(p==='reports')$('app').innerHTML=reports(rec,paid,given,recovered);
-
   if(p==='settings')$('app').innerHTML=
     `<div class="card"><div class="title">Settings</div>
     <label>Business / Account Name</label><input id="biz" value="${esc(D.settings.business)}">
@@ -277,28 +251,12 @@ function render(p='dash'){
     <button class="btn" onclick="signOut()">Logout</button>
     <p class="small">Cloud sync is active. Local settings/backups are also available.</p></div>`;
 }
-
-function actionButtons(type,id,label){
-  return `<div class="row-actions">
-    <button type="button" class="mini" onclick="editRecord('${type}','${id}')">✏️ Edit</button>
-    <button type="button" class="mini danger" onclick="deleteRecord('${type}','${id}',${JSON.stringify(label)})">🗑️ Delete</button>
-  </div>`;
-}
-
-function bankRows(){
-  if(!D.banks.length)return '<div class="empty">No banks / finance companies added.</div>';
-  return D.banks.map(b=>{
-    const count=D.loans.filter(l=>l.bank_id===b.id).length;
-    return `<div class="item"><div class="item-main"><b>${esc(b.name)}</b><div class="small">${count} linked loan${count===1?'':'s'}</div></div><div class="right">${actionButtons('bank',b.id,b.name)}</div></div>`;
-  }).join('');
-}
-
 function customerRows(a){
   if(!a.length)return '<div class="empty">No customers.</div>';
   return a.map(c=>{
     const g=D.tx.filter(x=>x.customer_id===c.id&&x.transaction_type==='udhar_given').reduce((a,x)=>a+Number(x.amount||0),0);
     const r=D.tx.filter(x=>x.customer_id===c.id&&x.transaction_type==='udhar_recovered').reduce((a,x)=>a+Number(x.amount||0),0);
-    return `<div class="item"><div class="item-main"><b>${esc(c.name)}</b><div class="small">${esc(c.phone||'No phone')} • ${D.tx.filter(x=>x.customer_id===c.id).length} entries</div></div><div class="right"><b>${money(Math.max(0,g-r))}</b><div class="small">pending</div>${actionButtons('customer',c.id,c.name)}</div></div>`;
+    return `<div class="item"><div style="flex:1"><b>${esc(c.name)}</b><div class="small">${esc(c.phone||'No phone')} â¢ ${D.tx.filter(x=>x.customer_id===c.id).length} entries â¢ ${esc(c.account_type||'personal')}</div></div><div class="right"><b>${money(Math.max(0,g-r))}</b><div class="small">pending</div><div style="margin-top:6px"><button class="btn mini" onclick="openEdit('customer','${c.id}')">Edit</button> <button class="btn danger mini" onclick="deleteCustomer('${c.id}')">Delete</button></div></div></div>`;
   }).join('');
 }
 function filterCustomers(q){q=q.toLowerCase();$('customerList').innerHTML=customerRows(D.customers.filter(c=>(c.name+' '+(c.phone||'')).toLowerCase().includes(q)))}
@@ -307,48 +265,25 @@ function loanRow(l){
   const paidEmis=D.emis.filter(e=>e.loan_id===l.id&&e.status==='paid').length;
   const left=Math.max(0,Number(l.total_emis||0)-paidEmis);
   const out=Math.max(0,Number(l.principal_amount||0)-loanPaid(l.id));
-  const bank=(D.banks.find(b=>b.id===l.bank_id)||{}).name||'Bank';
-  return `<div class="item"><div class="item-main"><b>${esc(bank)} — ${esc(l.loan_name)}</b>
-  <div class="small">Loan ${money(l.principal_amount)} • EMI ${money(l.emi_amount)} • ${l.interest_rate?l.interest_rate+'% interest':''}</div>
-  <div class="small">Loan No: ${esc(l.loan_number||'—')}</div>
-  <div class="small">${paidEmis}/${l.total_emis} paid • ${left} remaining • Outstanding ${money(out)}</div>
-  ${actionButtons('loan',l.id,l.loan_name)}</div>
+  return `<div class="item"><div style="flex:1"><b>${esc((D.banks.find(b=>b.id===l.bank_id)||{}).name||'Bank')} â ${esc(l.loan_name)}</b>
+  <div class="small">Loan ${money(l.principal_amount)} â¢ EMI ${money(l.emi_amount)} â¢ ${l.interest_rate?l.interest_rate+'% interest':''}</div>
+  <div class="small">${paidEmis}/${l.total_emis} paid â¢ ${left} remaining â¢ Outstanding ${money(out)}</div>
+  <div style="margin-top:7px"><button class="btn mini" onclick="openEdit('loan','${l.id}')">Edit</button> <button class="btn danger mini" onclick="deleteLoan('${l.id}')">Delete</button></div></div>
   <div class="right"><span class="pill ${left===0?'green':'blue'}">${left===0?'Paid':'Active'}</span>${left?`<br><button class="btn" style="padding:7px 9px;margin-top:6px" onclick="quickEMI('${l.id}')">Mark Paid</button>`:''}</div></div>`;
 }
 function emiRows(){
   const rows=D.emis.filter(e=>e.status!=='paid').slice(0,10);
   if(!rows.length)return '<div class="empty">No pending EMIs.</div>';
-  return rows.map(e=>{const l=D.loans.find(x=>x.id===e.loan_id);return `<div class="item"><div class="item-main"><b>${esc(l?.loan_name||'Loan')} — EMI #${e.emi_number}</b><div class="small">Due ${e.due_date}</div>${actionButtons('emi',e.id,'EMI #'+e.emi_number)}</div><div class="right"><b>${money(e.amount)}</b><br><button class="btn" style="padding:6px 8px;margin-top:5px" onclick="payEmi('${e.id}')">Mark Paid</button></div></div>`}).join('');
+  return rows.map(e=>{const l=D.loans.find(x=>x.id===e.loan_id);return `<div class="item"><div><b>${esc(l?.loan_name||'Loan')} â EMI #${e.emi_number}</b><div class="small">Due ${e.due_date}</div></div><div class="right"><b>${money(e.amount)}</b><br><button class="btn" style="padding:6px 8px;margin-top:5px" onclick="payEmi('${e.id}')">Mark Paid</button></div></div>`}).join('');
 }
-function emiAllRows(){
-  if(!D.emis.length)return '<div class="empty">No EMI records.</div>';
-  return D.emis.map(e=>{
-    const l=D.loans.find(x=>x.id===e.loan_id);
-    return `<div class="item"><div class="item-main"><b>${esc(l?.loan_name||'Loan')} — EMI #${e.emi_number}</b>
-      <div class="small">Due ${e.due_date} • ${money(e.amount)} • ${e.status}</div>
-      ${e.status==='paid'?`<div class="small">Paid ${money(e.paid_amount||e.amount)} on ${e.paid_date||'—'}</div>`:''}
-      ${actionButtons('emi',e.id,'EMI #'+e.emi_number)}</div>
-      <div class="right"><span class="pill ${e.status==='paid'?'green':'blue'}">${e.status==='paid'?'Paid':'Pending'}</span>
-      ${e.status!=='paid'?`<br><button class="btn" style="padding:6px 8px;margin-top:5px" onclick="payEmi('${e.id}')">Mark Paid</button>`:''}</div></div>`;
-  }).join('');
-}
-function cname(id){return (D.customers.find(c=>c.id===id)||{}).name||'—'}
+function cname(id){return (D.customers.find(c=>c.id===id)||{}).name||'â'}
 function txRows(n){
   if(!D.tx.length)return '<div class="empty">No transactions yet.</div>';
   return D.tx.slice(0,n).map(x=>{
     const plus=['money_received','udhar_recovered'].includes(x.transaction_type);
-    return `<div class="item"><div class="item-main"><b>${esc(x.description||x.transaction_type)}</b><div class="small">${x.transaction_date} • ${x.payment_method}${x.customer_id?' • '+esc(cname(x.customer_id)):''}</div><div class="small">${x.transaction_type}</div>${actionButtons('transaction',x.id,x.description||x.transaction_type)}</div><div class="right"><b class="${plus?'green':'red'}">${plus?'+':'-'}${money(x.amount)}</b></div></div>`;
+    return `<div class="item"><div style="flex:1"><b>${esc(x.description||x.transaction_type)}</b><div class="small">${x.transaction_date} â¢ ${x.payment_method}${x.customer_id?' â¢ '+esc(cname(x.customer_id)):''}${x.loan_id?' â¢ '+esc((D.loans.find(l=>l.id===x.loan_id)||{}).loan_name||'Loan'):''}</div><div style="margin-top:6px"><button class="btn mini" onclick="openEdit('tx','${x.id}')">Edit</button> <button class="btn danger mini" onclick="deleteTransaction('${x.id}')">Delete</button></div></div><div class="right"><b class="${plus?'green':'red'}">${plus?'+':'-'}${money(x.amount)}</b><div class="small">${x.transaction_type}</div></div></div>`;
   }).join('');
 }
-function reminderRows(){
-  if(!D.reminders.length)return '<div class="empty">No reminders.</div>';
-  return D.reminders.map(r=>{
-    const title=r.title||r.name||'Reminder';
-    const date=r.reminder_date||r.due_date||'—';
-    return `<div class="item"><div class="item-main"><b>${esc(title)}</b><div class="small">${esc(date)}${r.notes?' • '+esc(r.notes):''}</div>${actionButtons('reminder',r.id,title)}</div><div class="right"><span class="pill blue">${date}</span></div></div>`;
-  }).join('');
-}
-
 function reports(rec,paid,given,recovered){
   const out=D.loans.reduce((a,l)=>a+Math.max(0,Number(l.principal_amount||0)-loanPaid(l.id)),0);
   return `<div class="card"><div class="title">Overall Report</div>
@@ -362,248 +297,152 @@ function reports(rec,paid,given,recovered){
   <div class="section"><button class="btn" onclick="exportCSV()">Export CSV</button></div>`;
 }
 
-async function openModal(t,editId=null){
-  $('modal').style.display='flex';
-  $('modal').dataset.type=t;
-  $('modal').dataset.editId=editId||'';
-  $('mh').textContent=editId
-    ? (t==='customer'?'Edit Customer':t==='bank'?'Edit Bank / Finance Company':t==='loan'?'Edit Loan':t==='tx'?'Edit Transaction':t==='emi'?'Edit EMI':t==='reminder'?'Edit Reminder':'Edit Record')
-    : (t==='customer'?'Add Customer':t==='bank'?'Add Bank / Finance Company':t==='loan'?'Add Bank / Loan / EMI':t==='tx'?'Add Transaction':t==='reminder'?'Add Reminder':'Edit Record');
 
+async function deleteTransaction(id){
+  const x=D.tx.find(t=>t.id===id); if(!x)return;
+  if(!confirm('Delete this transaction? This cannot be undone.'))return;
+  try{
+    const {error}=await sb.from('transactions').delete().eq('id',id).eq('user_id',USER.id);
+    if(error)throw error;
+    D.tx=D.tx.filter(t=>t.id!==id);
+    render('tx');
+  }catch(err){alert('Delete failed: '+(err.message||err));}
+}
+
+async function deleteCustomer(id){
+  const c=D.customers.find(x=>x.id===id); if(!c)return;
+  if(!confirm('Delete '+(c.name||'this customer')+' and all transactions linked to this customer?'))return;
+  try{
+    const {error:te}=await sb.from('transactions').delete().eq('customer_id',id).eq('user_id',USER.id);
+    if(te)throw te;
+    const {error:ce}=await sb.from('customers').delete().eq('id',id).eq('user_id',USER.id);
+    if(ce)throw ce;
+    D.tx=D.tx.filter(t=>t.customer_id!==id); D.customers=D.customers.filter(x=>x.id!==id);
+    render('customers');
+  }catch(err){alert('Delete failed: '+(err.message||err));}
+}
+
+async function deleteLoan(id){
+  const l=D.loans.find(x=>x.id===id); if(!l)return;
+  if(!confirm('Delete this loan, its EMI schedule and linked EMI transactions?'))return;
+  try{
+    const {error:te}=await sb.from('transactions').delete().eq('loan_id',id).eq('user_id',USER.id);
+    if(te)throw te;
+    const {error:ee}=await sb.from('emis').delete().eq('loan_id',id).eq('user_id',USER.id);
+    if(ee)throw ee;
+    const {error:le}=await sb.from('loans').delete().eq('id',id).eq('user_id',USER.id);
+    if(le)throw le;
+    D.tx=D.tx.filter(t=>t.loan_id!==id); D.emis=D.emis.filter(e=>e.loan_id!==id); D.loans=D.loans.filter(x=>x.id!==id);
+    render('loans');
+  }catch(err){alert('Delete failed: '+(err.message||err));}
+}
+
+async function openEdit(t,id){
+  const obj=t==='customer'?D.customers.find(x=>x.id===id):t==='loan'?D.loans.find(x=>x.id===id):D.tx.find(x=>x.id===id);
+  if(!obj)return;
+  $('modal').style.display='flex'; $('modal').dataset.type=t; $('modal').dataset.editId=id;
+  $('mh').textContent=t==='customer'?'Edit Customer':t==='loan'?'Edit Loan':'Edit Transaction';
+  let f='';
+  if(t==='customer'){
+    f=`<label>Account</label><select id="account_type"><option value="personal" ${obj.account_type==='personal'?'selected':''}>Personal</option><option value="business" ${obj.account_type==='business'?'selected':''}>Business</option></select><label>Name</label><input id="name" value="${esc(obj.name)}" required><label>Phone</label><input id="phone" value="${esc(obj.phone||'')}"><div class="small">Opening udhar is kept as a transaction and can be edited separately.</div>`;
+  }
+  if(t==='loan'){
+    const bs=D.banks.map(b=>`<option value="${b.id}" ${b.id===obj.bank_id?'selected':''}>${esc(b.name)}</option>`).join('');
+    f=`<label>Account</label><select id="account_type"><option value="personal" ${obj.account_type==='personal'?'selected':''}>Personal</option><option value="business" ${obj.account_type==='business'?'selected':''}>Business</option></select><label>Bank / Finance Company</label><select id="bank_id">${bs}</select><label>Loan Name</label><input id="lname" value="${esc(obj.loan_name||'')}" required><label>Loan Number</label><input id="loan_number" value="${esc(obj.loan_number||'')}"><div class="row"><div><label>Loan Amount</label><input id="lamt" type="number" min="0" value="${Number(obj.principal_amount||0)}" required></div><div><label>Monthly EMI</label><input id="emi" type="number" min="1" value="${Number(obj.emi_amount||0)}" required></div></div><div class="row"><div><label>Total EMIs</label><input id="total" type="number" min="1" value="${Number(obj.total_emis||0)}" required></div><div><label>Interest %</label><input id="interest" type="number" step="0.001" value="${obj.interest_rate??''}"></div></div><label>First EMI Date</label><input id="first" type="date" value="${obj.start_date||today()}" required><div class="small">If EMI amount, total EMIs or first date changes, pending EMIs will be regenerated; already-paid EMIs are kept.</div>`;
+  }
+  if(t==='tx'){
+    const cs=D.customers.map(c=>`<option value="${c.id}" ${c.id===obj.customer_id?'selected':''}>${esc(c.name)}</option>`).join('');
+    const ls=D.loans.map(l=>`<option value="${l.id}" ${l.id===obj.loan_id?'selected':''}>${esc(l.loan_name)}</option>`).join('');
+    f=`<label>Type</label><select id="kind"><option value="money_received" ${obj.transaction_type==='money_received'?'selected':''}>Money Received</option><option value="money_paid" ${obj.transaction_type==='money_paid'?'selected':''}>Money Paid</option><option value="udhar_given" ${obj.transaction_type==='udhar_given'?'selected':''}>Udhar Given</option><option value="udhar_recovered" ${obj.transaction_type==='udhar_recovered'?'selected':''}>Udhar Recovered</option><option value="emi_paid" ${obj.transaction_type==='emi_paid'?'selected':''}>EMI Paid</option></select><label>Customer</label><select id="customer_id"><option value="">â Select â</option>${cs}</select><label>Loan</label><select id="loan_id"><option value="">â Select â</option>${ls}</select><label>Description</label><input id="desc" value="${esc(obj.description||'')}" required><div class="row"><div><label>Amount</label><input id="amt" type="number" min="0" value="${Number(obj.amount||0)}" required></div><div><label>Date</label><input id="date" type="date" value="${obj.transaction_date||today()}" required></div></div><label>Method</label><select id="method"><option value="cash" ${obj.payment_method==='cash'?'selected':''}>Cash</option><option value="bank" ${obj.payment_method==='bank'?'selected':''}>Bank</option><option value="upi" ${obj.payment_method==='upi'?'selected':''}>UPI</option></select>`;
+  }
+  $('fields').innerHTML=f;
+}
+async function openModal(t){
+  $('modal').dataset.editId='';
+  $('modal').style.display='flex';
+  $('mh').textContent=t==='customer'?'Add Customer':t==='loan'?'Add Bank / Loan / EMI':'Add Transaction';
   let cs=D.customers.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('');
   let bs=D.banks.map(b=>`<option value="${b.id}">${esc(b.name)}</option>`).join('');
   let ls=D.loans.map(l=>`<option value="${l.id}">${esc(l.loan_name)}</option>`).join('');
   let f='';
-
-  if(t==='customer'){
-    const c=editId?D.customers.find(x=>x.id===editId):null;
-    f=`<label>Account</label><select id="account_type"><option value="personal">Personal</option><option value="business">Business</option></select>
-    <label>Name</label><input id="name" required value="${esc(c?.name||'')}">
-    <label>Phone</label><input id="phone" value="${esc(c?.phone||'')}">
-    ${editId?'':'<label>Opening Udhar</label><input id="opening" type="number" min="0" value="0">'}`;
-  }
-
-  if(t==='loan'){
-    const l=editId?D.loans.find(x=>x.id===editId):null;
-    f=`<label>Account</label><select id="account_type"><option value="personal">Personal</option><option value="business">Business</option></select>
-    <label>Bank / Finance Company</label><select id="bank_id"><option value="">+ New bank</option>${bs}</select>
-    <input id="newbank" placeholder="If new bank, enter name">
-    <label>Loan Name</label><input id="lname" required placeholder="Personal / Equipment Loan" value="${esc(l?.loan_name||'')}">
-    <label>Loan Number</label><input id="loan_number" value="${esc(l?.loan_number||'')}">
-    <div class="row"><div><label>Loan Amount</label><input id="lamt" type="number" min="0" required value="${l?.principal_amount??''}"></div>
-    <div><label>Monthly EMI</label><input id="emi" type="number" min="1" required value="${l?.emi_amount??''}"></div></div>
-    <div class="row"><div><label>Total EMIs</label><input id="total" type="number" min="1" required value="${l?.total_emis??''}"></div>
-    <div><label>Interest %</label><input id="interest" type="number" step="0.001" value="${l?.interest_rate??''}"></div></div>
-    <label>First EMI Date</label><input id="first" type="date" value="${l?.start_date||today()}" required>`;
-  }
-
-  if(t==='bank'){
-    const b=editId?D.banks.find(x=>x.id===editId):null;
-    f=`<label>Bank / Finance Company Name</label>
-    <input id="bank_name" required placeholder="e.g. HDFC Bank / Chola / ICICI" value="${esc(b?.name||'')}">`;
-  }
-
-  if(t==='reminder'){
-    const r=editId?D.reminders.find(x=>x.id===editId):null;
-    f=`<label>Reminder Title</label><input id="rem_title" required placeholder="e.g. EMI payment / Customer recovery" value="${esc(r?.title||r?.name||'')}">
-    <label>Date</label><input id="rem_date" type="date" required value="${r?.reminder_date||r?.due_date||today()}">
-    <label>Notes</label><input id="rem_notes" placeholder="Optional notes" value="${esc(r?.notes||r?.description||'')}">`;
-  }
-
-  if(t==='tx'){
-    const x=editId?D.tx.find(z=>z.id===editId):null;
-    f=`<label>Type</label><select id="kind" onchange="changeTx()">
-    <option value="money_received">Money Received</option><option value="money_paid">Money Paid</option><option value="udhar_given">Udhar Given</option><option value="udhar_recovered">Udhar Recovered</option><option value="emi_paid">EMI Paid</option></select>
-    <div id="personBox"><label>Customer</label><select id="customer_id"><option value="">— Select —</option>${cs}</select></div>
-    <div id="loanBox" style="display:none"><label>Loan</label><select id="loan_id"><option value="">— Select —</option>${ls}</select></div>
-    <label>Description</label><input id="desc" required value="${esc(x?.description||'')}">
-    <div class="row"><div><label>Amount</label><input id="amt" type="number" min="0" required value="${x?.amount??''}"></div>
-    <div><label>Date</label><input id="date" type="date" value="${x?.transaction_date||today()}" required></div></div>
-    <label>Method</label><select id="method"><option value="cash">Cash</option><option value="bank">Bank</option><option value="upi">UPI</option></select>`;
-  }
-
-  if(t==='emi'){
-    const e=editId?D.emis.find(z=>z.id===editId):null;
-    f=`<label>Loan</label><input value="${esc(D.loans.find(l=>l.id===e?.loan_id)?.loan_name||'Loan')}" disabled>
-    <label>EMI Number</label><input value="${e?.emi_number??''}" disabled>
-    <div class="row"><div><label>Due Date</label><input id="emi_due" type="date" value="${e?.due_date||today()}"></div>
-    <div><label>Amount</label><input id="emi_amount" type="number" min="0" value="${e?.amount??''}"></div></div>
-    <label>Status</label><select id="emi_status"><option value="pending">Pending</option><option value="paid">Paid</option></select>
-    <div class="small">Editing an EMI changes only this EMI record; it does not recreate the loan.</div>`;
-  }
-
-  $('fields').innerHTML=f;
-  if(editId){
-    const rec=t==='customer'?D.customers.find(x=>x.id===editId):t==='bank'?D.banks.find(x=>x.id===editId):t==='loan'?D.loans.find(x=>x.id===editId):t==='tx'?D.tx.find(x=>x.id===editId):t==='emi'?D.emis.find(x=>x.id===editId):D.reminders.find(x=>x.id===editId);
-    if(rec){
-      if(t==='customer')$('account_type').value=rec.account_type||'personal';
-      if(t==='reminder'){ $('rem_title').value=rec.title||rec.name||''; $('rem_date').value=rec.reminder_date||rec.due_date||today(); $('rem_notes').value=rec.notes||rec.description||''; }
-      if(t==='loan'){ $('account_type').value=rec.account_type||'personal'; $('bank_id').value=rec.bank_id||''; }
-      if(t==='tx'){ $('kind').value=rec.transaction_type||'money_received'; $('customer_id').value=rec.customer_id||''; $('loan_id').value=rec.loan_id||''; $('method').value=rec.payment_method||'cash'; changeTx(); }
-      if(t==='emi')$('emi_status').value=rec.status||'pending';
-    }
-  }
+  if(t==='customer')f=`<label>Account</label><select id="account_type"><option value="personal">Personal</option><option value="business">Business</option></select><label>Name</label><input id="name" required><label>Phone</label><input id="phone"><label>Opening Udhar</label><input id="opening" type="number" min="0" value="0">`;
+  if(t==='loan')f=`<label>Account</label><select id="account_type"><option value="personal">Personal</option><option value="business">Business</option></select><label>Bank / Finance Company</label><select id="bank_id"><option value="">+ New bank</option>${bs}</select><input id="newbank" placeholder="If new bank, enter name"><label>Loan Name</label><input id="lname" required placeholder="Personal / Equipment Loan"><label>Loan Number</label><input id="loan_number"><div class="row"><div><label>Loan Amount</label><input id="lamt" type="number" min="0" required></div><div><label>Monthly EMI</label><input id="emi" type="number" min="1" required></div></div><div class="row"><div><label>Total EMIs</label><input id="total" type="number" min="1" required></div><div><label>Interest %</label><input id="interest" type="number" step="0.001"></div></div><label>First EMI Date</label><input id="first" type="date" value="${today()}" required>`;
+  if(t==='tx')f=`<label>Type</label><select id="kind" onchange="changeTx()"><option value="money_received">Money Received</option><option value="money_paid">Money Paid</option><option value="udhar_given">Udhar Given</option><option value="udhar_recovered">Udhar Recovered</option><option value="emi_paid">EMI Paid</option></select><div id="personBox"><label>Customer</label><select id="customer_id"><option value="">â Select â</option>${cs}</select></div><div id="loanBox" style="display:none"><label>Loan</label><select id="loan_id"><option value="">â Select â</option>${ls}</select></div><label>Description</label><input id="desc" required><div class="row"><div><label>Amount</label><input id="amt" type="number" min="0" required></div><div><label>Date</label><input id="date" type="date" value="${today()}" required></div></div><label>Method</label><select id="method"><option value="cash">Cash</option><option value="bank">Bank</option><option value="upi">UPI</option></select>`;
+  $('fields').innerHTML=f;$('modal').dataset.type=t;
 }
-
 function changeTx(){const k=$('kind').value;$('personBox').style.display=k==='emi_paid'?'none':'block';$('loanBox').style.display=k==='emi_paid'?'block':'none'}
 function closeModal(){$('modal').style.display='none'}
 
 async function saveForm(e){
   e.preventDefault();
-  const t=$('modal').dataset.type;
-  const editId=$('modal').dataset.editId||null;
+  const t=$('modal').dataset.type, editId=$('modal').dataset.editId;
   try{
-    if(t==='bank'){
-      const patch={name:$('bank_name').value.trim()};
-      if(!patch.name)throw new Error('Bank / finance company name is required.');
-      if(editId){
-        await update('banks',editId,patch);
-        const b=D.banks.find(x=>x.id===editId); if(b)Object.assign(b,patch);
-      }else{
-        const b=await insert('banks',patch);D.banks.unshift(b);
+    if(editId){
+      if(t==='customer'){
+        const patch={account_type:$('account_type').value,name:$('name').value.trim(),phone:$('phone').value.trim()};
+        await update('customers',editId,patch);
+        Object.assign(D.customers.find(x=>x.id===editId),patch);
       }
-    }
-
-    if(t==='reminder'){
-      const patch={title:$('rem_title').value.trim(),reminder_date:$('rem_date').value,notes:$('rem_notes').value.trim()};
-      if(!patch.title||!patch.reminder_date)throw new Error('Reminder title and date are required.');
-      if(editId){
-        await update('reminders',editId,patch);
-        const r=D.reminders.find(x=>x.id===editId);if(r)Object.assign(r,patch);
-      }else{
-        const r=await insert('reminders',patch);D.reminders.push(r);
+      if(t==='loan'){
+        const l=D.loans.find(x=>x.id===editId);
+        const patch={bank_id:$('bank_id').value,account_type:$('account_type').value,loan_name:$('lname').value.trim(),loan_number:$('loan_number').value.trim(),principal_amount:Number($('lamt').value)||0,emi_amount:Number($('emi').value)||0,total_emis:Number($('total').value)||0,start_date:$('first').value,interest_rate:Number($('interest').value)||null};
+        await update('loans',editId,patch);
+        Object.assign(l,patch);
+        const paid=D.emis.filter(x=>x.loan_id===editId&&x.status==='paid').sort((a,b)=>a.emi_number-b.emi_number);
+        const pending=D.emis.filter(x=>x.loan_id===editId&&x.status!=='paid');
+        const {error}=await sb.from('emis').delete().in('id',pending.map(x=>x.id)).eq('user_id',USER.id);
+        if(error)throw error;
+        D.emis=D.emis.filter(x=>!(x.loan_id===editId&&x.status!=='paid'));
+        let d=new Date(patch.start_date+'T00:00:00');
+        d.setMonth(d.getMonth()+paid.length);
+        const needed=Math.max(0,patch.total_emis-paid.length);
+        for(let j=1;j<=needed;j++){
+          const num=paid.length+j;
+          const due=d.toISOString().slice(0,10);
+          const em=await insert('emis',{loan_id:editId,emi_number:num,due_date:due,amount:patch.emi_amount,status:'pending'});
+          D.emis.push(em); d.setMonth(d.getMonth()+1);
+        }
       }
+      if(t==='tx'){
+        const patch={customer_id:$('customer_id')?.value||null,loan_id:$('loan_id')?.value||null,transaction_type:$('kind').value,amount:Number($('amt').value)||0,payment_method:$('method').value,description:$('desc').value.trim(),transaction_date:$('date').value};
+        await update('transactions',editId,patch);
+        Object.assign(D.tx.find(x=>x.id===editId),patch);
+      }
+      closeModal();render(currentPage||'dash');return;
     }
 
     if(t==='customer'){
-      const patch={account_type:$('account_type').value,name:$('name').value.trim(),phone:$('phone').value.trim()};
-      if(!patch.name)throw new Error('Customer name is required.');
-      if(editId){
-        await update('customers',editId,patch);
-        const c=D.customers.find(x=>x.id===editId);Object.assign(c,patch);
-      }else{
-        const c=await insert('customers',patch);D.customers.unshift(c);
-        const opening=Number($('opening').value)||0;
-        if(opening)D.tx.unshift(await insert('transactions',{account_type:patch.account_type,customer_id:c.id,transaction_type:'udhar_given',amount:opening,payment_method:'cash',description:'Opening Udhar',transaction_date:today()}));
-      }
+      const c=await insert('customers',{account_type:$('account_type').value,name:$('name').value.trim(),phone:$('phone').value.trim()});
+      D.customers.unshift(c);
+      const opening=Number($('opening').value)||0;
+      if(opening)D.tx.unshift(await insert('transactions',{account_type:$('account_type').value,customer_id:c.id,transaction_type:'udhar_given',amount:opening,payment_method:'cash',description:'Opening Udhar',transaction_date:today()}));
     }
-
     if(t==='loan'){
-      const patch={bank_id:$('bank_id').value,account_type:$('account_type').value,loan_name:$('lname').value.trim(),loan_number:$('loan_number').value.trim(),principal_amount:Number($('lamt').value)||0,outstanding_amount:Number($('lamt').value)||0,emi_amount:Number($('emi').value)||0,total_emis:Number($('total').value)||0,start_date:$('first').value,interest_rate:Number($('interest').value)||null};
-      if(!patch.loan_name)throw new Error('Loan name is required.');
-      let bankId=patch.bank_id;
+      let bankId=$('bank_id').value;
       if(!bankId){
-        const newName=$('newbank').value.trim();
-        if(!newName)throw new Error('Select a bank or enter a new bank name.');
-        const bank=await insert('banks',{name:newName});D.banks.unshift(bank);bankId=bank.id;patch.bank_id=bankId;
+        const bank=await insert('banks',{name:$('newbank').value.trim()||'Other'});
+        D.banks.unshift(bank);bankId=bank.id;
       }
-      if(editId){
-        await update('loans',editId,patch);
-        const l=D.loans.find(x=>x.id===editId);Object.assign(l,patch);
-        // Update only unpaid EMI amounts/dates to keep paid history intact.
-        const pending=D.emis.filter(x=>x.loan_id===editId&&x.status!=='paid').sort((a,b)=>a.emi_number-b.emi_number);
-        let d=new Date(patch.start_date+'T00:00:00');
-        for(let i=1;i<=patch.total_emis;i++){
-          const existing=D.emis.find(x=>x.loan_id===editId&&x.emi_number===i);
-          if(existing && existing.status==='paid'){ d.setMonth(d.getMonth()+1); continue; }
-          if(existing){
-            const due=d.toISOString().slice(0,10);
-            await update('emis',existing.id,{due_date:due,amount:patch.emi_amount});
-            existing.due_date=due;existing.amount=patch.emi_amount;
-          }else{
-            const em=await insert('emis',{loan_id:editId,emi_number:i,due_date:d.toISOString().slice(0,10),amount:patch.emi_amount,status:'pending'});
-            D.emis.push(em);
-          }
-          d.setMonth(d.getMonth()+1);
-        }
-      }else{
-        const l=await insert('loans',patch);D.loans.unshift(l);
-        let d=new Date(patch.start_date+'T00:00:00');
-        for(let i=1;i<=l.total_emis;i++){
-          const em=await insert('emis',{loan_id:l.id,emi_number:i,due_date:d.toISOString().slice(0,10),amount:l.emi_amount,status:'pending'});
-          D.emis.push(em);d.setMonth(d.getMonth()+1);
-        }
+      const l=await insert('loans',{bank_id:bankId,account_type:$('account_type').value,loan_name:$('lname').value.trim(),loan_number:$('loan_number').value.trim(),principal_amount:Number($('lamt').value)||0,outstanding_amount:Number($('lamt').value)||0,emi_amount:Number($('emi').value)||0,total_emis:Number($('total').value)||0,start_date:$('first').value,interest_rate:Number($('interest').value)||null});
+      D.loans.unshift(l);
+      let d=new Date($('first').value+'T00:00:00');
+      for(let i=1;i<=l.total_emis;i++){
+        const due=d.toISOString().slice(0,10);
+        const em=await insert('emis',{loan_id:l.id,emi_number:i,due_date:due,amount:l.emi_amount,status:'pending'});
+        D.emis.push(em);d.setMonth(d.getMonth()+1);
       }
     }
-
     if(t==='tx'){
-      const patch={account_type:'personal',customer_id:$('customer_id')?.value||null,loan_id:$('loan_id')?.value||null,transaction_type:$('kind').value,amount:Number($('amt').value)||0,payment_method:$('method').value,description:$('desc').value.trim(),transaction_date:$('date').value};
-      if(!patch.description)throw new Error('Description is required.');
-      if(editId){
-        await update('transactions',editId,patch);
-        const x=D.tx.find(z=>z.id===editId);Object.assign(x,patch);
-      }else{
-        const tx=await insert('transactions',patch);D.tx.unshift(tx);
-        if(tx.transaction_type==='emi_paid'&&tx.loan_id){
-          const pending=D.emis.find(x=>x.loan_id===tx.loan_id&&x.status!=='paid');
-          if(pending)await payEmi(pending.id,tx.amount,tx.transaction_date,tx.payment_method,false);
-        }
+      const tx=await insert('transactions',{account_type:'personal',customer_id:$('customer_id')?.value||null,loan_id:$('loan_id')?.value||null,transaction_type:$('kind').value,amount:Number($('amt').value)||0,payment_method:$('method').value,description:$('desc').value.trim(),transaction_date:$('date').value});
+      D.tx.unshift(tx);
+      if(tx.transaction_type==='emi_paid'&&tx.loan_id){
+        const pending=D.emis.find(x=>x.loan_id===tx.loan_id&&x.status!=='paid');
+        if(pending)await payEmi(pending.id,tx.amount,tx.transaction_date,tx.payment_method,false);
       }
     }
-
-    if(t==='emi'){
-      const patch={due_date:$('emi_due').value,amount:Number($('emi_amount').value)||0,status:$('emi_status').value};
-      if(editId){
-        const old=D.emis.find(x=>x.id===editId);
-        if(patch.status==='paid' && old.status!=='paid'){
-          await update('emis',editId,{...patch,paid_amount:patch.amount,paid_date:today(),payment_method:'bank'});
-          Object.assign(old,{...patch,paid_amount:patch.amount,paid_date:today(),payment_method:'bank'});
-        }else{
-          await update('emis',editId,patch);
-          Object.assign(old,patch);
-        }
-      }
-    }
-
-    closeModal();render('dash');
+    closeModal();render(currentPage||'dash');
   }catch(err){alert('Save failed: '+(err.message||err));}
 }
-
-function editRecord(type,id){openModal(type,id)}
-
-async function deleteRecord(type,id,label){
-  if(!confirm('Delete '+(label||'this record')+'? This cannot be undone.'))return;
-  try{
-    if(type==='customer'){
-      const linked=D.tx.filter(x=>x.customer_id===id);
-      if(linked.length)throw new Error('This customer has transaction history. Delete those transactions first, then delete the customer.');
-      const {error}=await sb.from('customers').delete().eq('id',id).eq('user_id',USER.id);
-      if(error)throw error;
-      D.customers=D.customers.filter(x=>x.id!==id);
-    }
-    if(type==='bank'){
-      const linked=D.loans.filter(x=>x.bank_id===id);
-      if(linked.length)throw new Error('This bank has linked loans. Delete or move the loans first.');
-      const {error}=await sb.from('banks').delete().eq('id',id).eq('user_id',USER.id);
-      if(error)throw error;
-      D.banks=D.banks.filter(x=>x.id!==id);
-    }
-    if(type==='loan'){
-      await sb.from('transactions').delete().eq('loan_id',id).eq('user_id',USER.id);
-      await sb.from('emis').delete().eq('loan_id',id).eq('user_id',USER.id);
-      const {error}=await sb.from('loans').delete().eq('id',id).eq('user_id',USER.id);
-      if(error)throw error;
-      D.tx=D.tx.filter(x=>x.loan_id!==id);D.emis=D.emis.filter(x=>x.loan_id!==id);D.loans=D.loans.filter(x=>x.id!==id);
-    }
-    if(type==='emi'){
-      const {error}=await sb.from('emis').delete().eq('id',id).eq('user_id',USER.id);
-      if(error)throw error;
-      D.emis=D.emis.filter(x=>x.id!==id);
-    }
-    if(type==='reminder'){
-      const {error}=await sb.from('reminders').delete().eq('id',id).eq('user_id',USER.id);
-      if(error)throw error;
-      D.reminders=D.reminders.filter(x=>x.id!==id);
-    }
-    if(type==='transaction'){
-      const {error}=await sb.from('transactions').delete().eq('id',id).eq('user_id',USER.id);
-      if(error)throw error;
-      D.tx=D.tx.filter(x=>x.id!==id);
-    }
-    render('dash');
-  }catch(err){alert('Delete failed: '+(err.message||err));}
-}
-
 async function quickEMI(loanId){
   const e=D.emis.find(x=>x.loan_id===loanId&&x.status!=='paid');if(e)await payEmi(e.id);
 }
@@ -622,7 +461,7 @@ async function payEmi(emiId,amount,date,method,syncTx=true){
 }
 function notifyDue(){
   const todayD=new Date(today());
-  const due=D.emis.filter(e=>e.status!=='paid').slice(0,8).map(e=>`${e.due_date} — ${money(e.amount)} — EMI #${e.emi_number}`);
+  const due=D.emis.filter(e=>e.status!=='paid').slice(0,8).map(e=>`${e.due_date} â ${money(e.amount)} â EMI #${e.emi_number}`);
   alert(due.length?'Pending EMIs\n\n'+due.join('\n'):'No pending EMIs');
   requestNotify(false);
 }
