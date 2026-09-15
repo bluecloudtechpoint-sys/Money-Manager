@@ -281,7 +281,7 @@ function render(p='dash'){
 function actionButtons(type,id,label){
   return `<div class="row-actions">
     <button type="button" class="mini" onclick="editRecord('${type}','${id}')">✏️ Edit</button>
-    <button type="button" class="mini danger" onclick="deleteRecord('${type}','${id}',${JSON.stringify(label)})">🗑️ Delete</button>
+    <button type="button" class="mini danger" onclick='deleteRecord("${type}","${id}",decodeURIComponent("${encodeURIComponent(label)}"))'>🗑️ Delete</button>
   </div>`;
 }
 
