@@ -237,7 +237,7 @@ function render(p='dash'){
       <button class="btn alt" onclick="openModal('tx')">+ Transaction</button>
       <button class="btn warn" onclick="notifyDue()">🔔 Check Reminders</button>
     </div>
-    <div class="section"><div class="title">EMI Schedule</div><div class="card">${emiRows()}</div></div>
+    <div class="section"><div class="title">EMI Schedule <span class="small" style="margin-left:10px">🔴 ${D.emis.filter(e=>e.status!=='paid'&&e.due_date<today()).length} Overdue &nbsp; 🟠 ${D.emis.filter(e=>e.status!=='paid'&&e.due_date===today()).length} Due Today &nbsp; 🔵 ${D.emis.filter(e=>e.status!=='paid'&&e.due_date>today()).length} Upcoming &nbsp; 🟢 ${D.emis.filter(e=>e.status==='paid').length} Paid</span></div><div class="card">${emiRows()}</div></div>
     <div class="section"><div class="title">Recent Activity</div><div class="card">${txRows(8)}</div></div>`;
 
   if(p==='customers')$('app').innerHTML=
