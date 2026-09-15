@@ -45,7 +45,29 @@ hr{border:0;border-top:1px solid #eee;margin:14px 0}
     <div id="authMsg" class="authmsg">Connecting securely…</div>
   </div>
 </div>
+<div id="pinLock" style="display:none;position:fixed;inset:0;background:#f5f6f8;z-index:9999;align-items:center;justify-content:center;padding:20px">
+  <div class="card" style="width:100%;max-width:360px;text-align:center">
+    <div style="font-size:42px;margin-bottom:10px">🔒</div>
+    <h2 style="margin:0 0 8px">Money Manager Locked</h2>
+    <div class="small" style="margin-bottom:18px">Enter your PIN to continue</div>
 
+    <input
+      id="pinInput"
+      type="password"
+      inputmode="numeric"
+      maxlength="6"
+      placeholder="Enter PIN"
+      style="width:100%;text-align:center;font-size:24px;letter-spacing:8px"
+      onkeydown="if(event.key==='Enter')unlockApp()"
+    >
+
+    <button class="btn" style="width:100%;margin-top:12px" onclick="unlockApp()">
+      Unlock
+    </button>
+
+    <div id="pinError" class="small" style="color:#b91c1c;margin-top:10px"></div>
+  </div>
+</div>
 <div id="appShell" style="display:none">
 <header>
   <h1 id="appTitle">Money Manager</h1>
@@ -190,9 +212,21 @@ async function init(){
 }
 
 async function startApp(){
-  $('auth').style.display='none';$('appShell').style.display='block';
+  $('auth').style.display='none';
+  $('appShell').style.display='none';
   $('userBar').textContent='Signed in: '+USER.email;
+
   await loadCloud();
+
+  if(localStorage.getItem('mm_pin_hash')){
+    $('pinLock').style.display='flex';
+    $('pinInput').value='';
+    $('pinError').textContent='';
+    setTimeout(()=>$('pinInput').focus(),100);
+    return;
+  }
+
+  $('appShell').style.display='block';
   render('dash');
 }
 
@@ -297,15 +331,32 @@ function render(p='dash'){
   if(p==='reports')$('app').innerHTML=reports(rec,paid,given,recovered);
 
   if(p==='settings')$('app').innerHTML=
-    `<div class="card"><div class="title">Settings</div>
-    <label>Business / Account Name</label><input id="biz" value="${esc(D.settings.business)}">
-    <button class="btn" onclick="setBiz()">Save Name</button><hr>
+  `<div class="card">
+    <div class="title">Settings</div>
+
+    <label>Business / Account Name</label>
+    <input id="biz" value="${esc(D.settings.business)}">
+    <button class="btn" onclick="setBiz()">Save Name</button>
+
+    <hr>
+
+    <div class="title">Privacy Lock</div>
+    <div class="small" style="margin-bottom:10px">
+      Protect Money Manager with a 4–6 digit PIN.
+    </div>
+
+    <button class="btn" onclick="setPin()">🔐 Set / Change PIN</button>
+    <button class="btn alt" onclick="lockApp()">🔒 Lock Now</button>
+
+    <hr>
+
     <button class="btn alt" onclick="requestNotify()">Enable Notifications</button><br><br>
     <button class="btn alt" onclick="backup()">Export Backup</button><br><br>
     <button class="btn alt" onclick="document.getElementById('restore').click()">Restore Local Backup</button><br><br>
     <button class="btn" onclick="signOut()">Logout</button>
-    <p class="small">Cloud sync is active. Local settings/backups are also available.</p></div>`;
-}
+
+    <p class="small">Cloud sync is active. Local settings/backups are also available.</p>
+  </div>`;
 
 function actionButtons(type,id,label){
   return `<div class="row-actions">
@@ -972,6 +1023,89 @@ function exportCSV(){
   const rows=[['Date','Type','Description','Customer','Amount','Method'],...D.tx.map(x=>[x.transaction_date,x.transaction_type,x.description||'',cname(x.customer_id),x.amount,x.payment_method])];
   const csv=rows.map(r=>r.map(v=>'"'+String(v).replaceAll('"','""')+'"').join(',')).join('\n');
   const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='transactions-'+today()+'.csv';a.click();
+}async function pinHash(pin){
+  const data=new TextEncoder().encode(pin);
+  const hash=await crypto.subtle.digest('SHA-256',data);
+  return Array.from(new Uint8Array(hash))
+    .map(b=>b.toString(16).padStart(2,'0'))
+    .join('');
+}
+
+async function setPin(){
+  const current=localStorage.getItem('mm_pin_hash');
+
+  if(current){
+    const oldPin=prompt('Enter your current PIN:');
+    if(oldPin===null)return;
+
+    if(await pinHash(oldPin)!==current){
+      alert('Incorrect current PIN.');
+      return;
+    }
+  }
+
+  const pin=prompt('Set a new 4–6 digit PIN:');
+  if(pin===null)return;
+
+  if(!/^\d{4,6}$/.test(pin)){
+    alert('PIN must contain 4–6 digits only.');
+    return;
+  }
+
+  const confirmPin=prompt('Confirm your new PIN:');
+  if(confirmPin===null)return;
+
+  if(pin!==confirmPin){
+    alert('PINs do not match.');
+    return;
+  }
+
+  localStorage.setItem('mm_pin_hash',await pinHash(pin));
+  alert(current?'PIN changed successfully.':'PIN set successfully.');
+}
+
+async function unlockApp(){
+  const stored=localStorage.getItem('mm_pin_hash');
+  const input=$('pinInput');
+
+  if(!stored){
+    $('pinLock').style.display='none';
+    $('appShell').style.display='block';
+    return;
+  }
+
+  const pin=(input?.value||'').trim();
+
+  if(!/^\d{4,6}$/.test(pin)){
+    $('pinError').textContent='Enter your 4–6 digit PIN.';
+    return;
+  }
+
+  if(await pinHash(pin)!==stored){
+    $('pinError').textContent='Incorrect PIN.';
+    input.value='';
+    input.focus();
+    return;
+  }
+
+  $('pinError').textContent='';
+  input.value='';
+  $('pinLock').style.display='none';
+  $('appShell').style.display='block';
+}
+
+function lockApp(){
+  if(!localStorage.getItem('mm_pin_hash')){
+    alert('Please set a PIN first.');
+    return;
+  }
+
+  $('appShell').style.display='none';
+  $('pinLock').style.display='flex';
+  $('pinInput').value='';
+  $('pinError').textContent='';
+
+  setTimeout(()=>$('pinInput').focus(),100);
 }
   function exportExcel(){
   try{
