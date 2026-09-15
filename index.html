@@ -29,6 +29,8 @@ nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid 
 .bank-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
 hr{border:0;border-top:1px solid #eee;margin:14px 0}
 </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 </head>
 <body>
 
@@ -507,6 +509,7 @@ function txRows(n){
 
 function reports(rec,paid,given,recovered){
   const out=D.loans.reduce((a,l)=>a+Math.max(0,Number(l.principal_amount||0)-loanPaid(l.id)),0);
+
   return `<div class="card"><div class="title">Overall Report</div>
   <div class="kpi"><span>Money Received</span><b class="green">${money(rec)}</b></div>
   <div class="kpi"><span>Money Paid</span><b class="red">${money(paid)}</b></div>
@@ -515,7 +518,14 @@ function reports(rec,paid,given,recovered){
   <div class="kpi"><span>Pending Udhar</span><b class="orange">${money(Math.max(0,given-recovered))}</b></div>
   <div class="kpi"><span>Loan Outstanding</span><b class="blue">${money(out)}</b></div>
   <div class="kpi"><span>Monthly EMI</span><b>${money(D.loans.reduce((a,l)=>a+Number(l.emi_amount||0),0))}</b></div></div>
-  <div class="section"><button class="btn" onclick="exportCSV()">Export CSV</button></div>`;
+
+  <div class="section">
+    <div class="actions">
+      <button class="btn" onclick="exportPDF()">📄 Export PDF</button>
+      <button class="btn" onclick="exportExcel()">📊 Export Excel</button>
+      <button class="btn alt" onclick="exportCSV()">Export CSV</button>
+    </div>
+  </div>`;
 }
 
 async function openModal(t,editId=null){
@@ -962,6 +972,211 @@ function exportCSV(){
   const rows=[['Date','Type','Description','Customer','Amount','Method'],...D.tx.map(x=>[x.transaction_date,x.transaction_type,x.description||'',cname(x.customer_id),x.amount,x.payment_method])];
   const csv=rows.map(r=>r.map(v=>'"'+String(v).replaceAll('"','""')+'"').join(',')).join('\n');
   const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='transactions-'+today()+'.csv';a.click();
+}
+  function exportExcel(){
+  try{
+    if(typeof XLSX==='undefined'){
+      alert('Excel export library is not loaded.');
+      return;
+    }
+
+    const received=D.tx
+      .filter(x=>['money_received','udhar_recovered'].includes(x.transaction_type))
+      .reduce((a,x)=>a+Number(x.amount||0),0);
+
+    const paid=D.tx
+      .filter(x=>['money_paid','udhar_given','emi_paid'].includes(x.transaction_type))
+      .reduce((a,x)=>a+Number(x.amount||0),0);
+
+    const given=D.tx
+      .filter(x=>x.transaction_type==='udhar_given')
+      .reduce((a,x)=>a+Number(x.amount||0),0);
+
+    const recovered=D.tx
+      .filter(x=>x.transaction_type==='udhar_recovered')
+      .reduce((a,x)=>a+Number(x.amount||0),0);
+
+    const outstanding=D.loans.reduce(
+      (a,l)=>a+Math.max(0,Number(l.principal_amount||0)-loanPaid(l.id)),
+      0
+    );
+
+    const monthlyEmi=D.loans.reduce(
+      (a,l)=>a+Number(l.emi_amount||0),
+      0
+    );
+
+    const summary=[
+      ['Money Received',received],
+      ['Money Paid',paid],
+      ['Udhar Given',given],
+      ['Udhar Recovered',recovered],
+      ['Pending Udhar',Math.max(0,given-recovered)],
+      ['Loan Outstanding',outstanding],
+      ['Monthly EMI',monthlyEmi]
+    ];
+
+    const transactions=D.tx.map(x=>[
+      x.transaction_date||'',
+      x.transaction_type||'',
+      x.description||'',
+      x.customer_id?cname(x.customer_id):'',
+      x.loan_id?((D.loans.find(l=>l.id===x.loan_id)||{}).loan_name||''):'',
+      Number(x.amount||0),
+      x.payment_method||''
+    ]);
+
+    const emis=D.emis.map(e=>{
+      const l=D.loans.find(x=>x.id===e.loan_id);
+
+      return [
+        l?.loan_name||'Loan',
+        e.emi_number,
+        e.due_date||'',
+        Number(e.amount||0),
+        e.status||'',
+        e.paid_date||'',
+        Number(e.paid_amount||0),
+        e.payment_method||''
+      ];
+    });
+
+    const wb=XLSX.utils.book_new();
+
+    const wsSummary=XLSX.utils.aoa_to_sheet([
+      ['Money Manager Report'],
+      ['Generated',new Date().toLocaleString()],
+      [],
+      ['Report Item','Amount'],
+      ...summary
+    ]);
+
+    const wsTransactions=XLSX.utils.aoa_to_sheet([
+      ['Date','Type','Description','Customer','Loan','Amount','Method'],
+      ...transactions
+    ]);
+
+    const wsEmis=XLSX.utils.aoa_to_sheet([
+      ['Loan','EMI #','Due Date','Amount','Status','Paid Date','Paid Amount','Payment Method'],
+      ...emis
+    ]);
+
+    XLSX.utils.book_append_sheet(wb,wsSummary,'Summary');
+    XLSX.utils.book_append_sheet(wb,wsTransactions,'Transactions');
+    XLSX.utils.book_append_sheet(wb,wsEmis,'EMIs');
+
+    XLSX.writeFile(wb,'money-manager-report-'+today()+'.xlsx');
+
+    alert('Excel report downloaded successfully.');
+  }catch(err){
+    alert('Excel export failed: '+(err.message||err));
+  }
+}
+
+function exportPDF(){
+  try{
+    if(!window.jspdf||!window.jspdf.jsPDF){
+      alert('PDF export library is not loaded.');
+      return;
+    }
+
+    const {jsPDF}=window.jspdf;
+    const doc=new jsPDF();
+
+    const received=D.tx
+      .filter(x=>['money_received','udhar_recovered'].includes(x.transaction_type))
+      .reduce((a,x)=>a+Number(x.amount||0),0);
+
+    const paid=D.tx
+      .filter(x=>['money_paid','udhar_given','emi_paid'].includes(x.transaction_type))
+      .reduce((a,x)=>a+Number(x.amount||0),0);
+
+    const given=D.tx
+      .filter(x=>x.transaction_type==='udhar_given')
+      .reduce((a,x)=>a+Number(x.amount||0),0);
+
+    const recovered=D.tx
+      .filter(x=>x.transaction_type==='udhar_recovered')
+      .reduce((a,x)=>a+Number(x.amount||0),0);
+
+    const outstanding=D.loans.reduce(
+      (a,l)=>a+Math.max(0,Number(l.principal_amount||0)-loanPaid(l.id)),
+      0
+    );
+
+    const monthlyEmi=D.loans.reduce(
+      (a,l)=>a+Number(l.emi_amount||0),
+      0
+    );
+
+    let y=20;
+
+    doc.setFontSize(18);
+    doc.text('Money Manager Report',14,y);
+    y+=10;
+
+    doc.setFontSize(10);
+    doc.text('Generated: '+new Date().toLocaleString(),14,y);
+    y+=12;
+
+    doc.setFontSize(13);
+    doc.text('Overall Summary',14,y);
+    y+=8;
+
+    const summary=[
+      ['Money Received',received],
+      ['Money Paid',paid],
+      ['Udhar Given',given],
+      ['Udhar Recovered',recovered],
+      ['Pending Udhar',Math.max(0,given-recovered)],
+      ['Loan Outstanding',outstanding],
+      ['Monthly EMI',monthlyEmi]
+    ];
+
+    doc.setFontSize(10);
+
+    summary.forEach(row=>{
+      doc.text(row[0],14,y);
+      doc.text('Rs. '+Number(row[1]||0).toLocaleString('en-IN'),100,y);
+      y+=6;
+    });
+
+    y+=6;
+    doc.setFontSize(13);
+    doc.text('Transactions',14,y);
+    y+=8;
+
+    doc.setFontSize(8);
+
+    D.tx.forEach(x=>{
+      const customer=x.customer_id?cname(x.customer_id):'';
+      const loan=x.loan_id?((D.loans.find(l=>l.id===x.loan_id)||{}).loan_name||''):'';
+
+      const line=
+        (x.transaction_date||'')+' | '+
+        (x.transaction_type||'')+' | '+
+        (x.description||'')+' | '+
+        (customer||'')+' | '+
+        (loan||'')+' | Rs. '+
+        Number(x.amount||0).toLocaleString('en-IN');
+
+      const wrapped=doc.splitTextToSize(line,180);
+
+      if(y+wrapped.length*4>285){
+        doc.addPage();
+        y=20;
+      }
+
+      doc.text(wrapped,14,y);
+      y+=wrapped.length*4+2;
+    });
+
+    doc.save('money-manager-report-'+today()+'.pdf');
+
+    alert('PDF report downloaded successfully.');
+  }catch(err){
+    alert('PDF export failed: '+(err.message||err));
+  }
 }
 if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
 init();
