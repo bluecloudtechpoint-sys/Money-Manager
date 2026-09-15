@@ -608,17 +608,62 @@ async function quickEMI(loanId){
   const e=D.emis.find(x=>x.loan_id===loanId&&x.status!=='paid');if(e)await payEmi(e.id);
 }
 async function payEmi(emiId,amount,date,method,syncTx=true){
-  const e=D.emis.find(x=>x.id===emiId);if(!e||e.status==='paid')return;
-  const amt=Number(amount||e.amount),dt=date||today(),pm=method||'bank';
+  const e=D.emis.find(x=>x.id===emiId);
+  if(!e||e.status==='paid')return;
+
+  const amt=Number(amount||e.amount);
+  const today=new Date().toISOString().slice(0,10);
+
+  const paymentDate=prompt(
+    'Payment Date (YYYY-MM-DD):',
+    date||today
+  );
+
+  if(paymentDate===null)return;
+
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(paymentDate)){
+    alert('Please enter a valid payment date in YYYY-MM-DD format.');
+    return;
+  }
+
+  const pm=method||'bank';
+
+  if(!confirm(
+    'Confirm EMI Payment\n\n' +
+'Amount: ₹'+amt.toLocaleString('en-IN')+'\n' +
+'Payment Date: '+paymentDate
+  ))return;
+
   try{
-    await update('emis',e.id,{status:'paid',paid_amount:amt,paid_date:dt,payment_method:pm});
-    e.status='paid';e.paid_amount=amt;e.paid_date=dt;e.payment_method=pm;
+    await update('emis',e.id,{
+      status:'paid',
+      paid_amount:amt,
+      paid_date:paymentDate,
+      payment_method:pm
+    });
+
+    e.status='paid';
+    e.paid_amount=amt;
+    e.paid_date=paymentDate;
+    e.payment_method=pm;
+
     if(syncTx){
-      const tx=await insert('transactions',{account_type:'personal',loan_id:e.loan_id,transaction_type:'emi_paid',amount:amt,payment_method:pm,description:'EMI #'+e.emi_number+' paid',transaction_date:dt});
+      const tx=await insert('transactions',{
+        account_type:'personal',
+        loan_id:e.loan_id,
+        transaction_type:'emi_paid',
+        amount:amt,
+        payment_method:pm,
+        description:'EMI #'+e.emi_number+' paid',
+        transaction_date:paymentDate
+      });
       D.tx.unshift(tx);
     }
+
     render('dash');
-  }catch(err){alert('EMI update failed: '+(err.message||err));}
+  }catch(err){
+    alert('EMI update failed: '+(err.message||err));
+  }
 }
 function notifyDue(){
   const todayD=new Date(today());
