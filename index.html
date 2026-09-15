@@ -265,9 +265,28 @@ function render(p='dash'){
   </div>
   <div id="emiRecordsList" class="card">${emiAllRows()}</div>
 </div>`;
-  if(p==='tx')$('app').innerHTML=
-    `<div class="actions"><button class="btn" onclick="openModal('tx')">+ Transaction</button></div>
-     <div class="card">${txRows(200)}</div>`;
+ if(p==='tx')$('app').innerHTML=
+  `<div class="actions"><button class="btn" onclick="openModal('tx')">+ Transaction</button></div>
+  <div class="card">
+    <input id="txSearch" class="search" placeholder="Search description, customer, loan or amount..." oninput="filterTransactions()">
+    <div class="actions" style="margin-top:8px">
+      <select id="txType" onchange="filterTransactions()">
+        <option value="all">All Types</option>
+        <option value="money_received">Money Received</option>
+        <option value="money_paid">Money Paid</option>
+        <option value="udhar_given">Udhar Given</option>
+        <option value="udhar_recovered">Udhar Recovered</option>
+        <option value="emi_paid">EMI Paid</option>
+      </select>
+      <select id="txMethod" onchange="filterTransactions()">
+        <option value="all">All Methods</option>
+        <option value="cash">Cash</option>
+        <option value="bank">Bank</option>
+        <option value="upi">UPI</option>
+      </select>
+    </div>
+    <div id="transactionList">${txRows(200)}</div>
+  </div>`;
 
   if(p==='reminders')$('app').innerHTML=
     `<div class="actions"><button class="btn" onclick="openModal('reminder')">+ Reminder</button></div>
@@ -422,8 +441,63 @@ function txRows(n){
     return `<div class="item"><div class="item-main"><b>${esc(x.description||x.transaction_type)}</b><div class="small">${x.transaction_date} • ${x.payment_method}${x.customer_id?' • '+esc(cname(x.customer_id)):''}</div><div class="small">${x.transaction_type}</div>${actionButtons('transaction',x.id,x.description||x.transaction_type)}</div><div class="right"><b class="${plus?'green':'red'}">${plus?'+':'-'}${money(x.amount)}</b></div></div>`;
   }).join('');
 }
-function reminderRows(){
-  if(!D.reminders.length)return '<div class="empty">No reminders.</div>';
+  function filterTransactions(){
+  const q=($('txSearch')?.value||'').toLowerCase().trim();
+  const type=$('txType')?.value||'all';
+  const method=$('txMethod')?.value||'all';
+
+  const filtered=D.tx.filter(x=>{
+    const customer=x.customer_id?cname(x.customer_id):'';
+    const loan=x.loan_id?(D.loans.find(l=>l.id===x.loan_id)||{}).loan_name||'':'';
+
+    const text=[
+      x.description||'',
+      x.transaction_type||'',
+      x.transaction_date||'',
+      x.payment_method||'',
+      customer,
+      loan,
+      x.amount||''
+    ].join(' ').toLowerCase();
+
+    if(q&&!text.includes(q))return false;
+    if(type!=='all'&&x.transaction_type!==type)return false;
+    if(method!=='all'&&x.payment_method!==method)return false;
+
+    return true;
+  });
+
+  const box=$('transactionList');
+
+  if(!filtered.length){
+    box.innerHTML='<div class="empty">No transactions found.</div>';
+    return;
+  }
+
+  box.innerHTML=filtered.map(x=>{
+    const plus=['money_received','udhar_recovered'].includes(x.transaction_type);
+
+    return `<div class="item">
+      <div style="flex:1">
+        <b>${esc(x.description||x.transaction_type)}</b>
+        <div class="small">
+          ${x.transaction_date} • ${x.payment_method}
+          ${x.customer_id?' • '+esc(cname(x.customer_id)):''}
+          ${x.loan_id?' • '+esc((D.loans.find(l=>l.id===x.loan_id)||{}).loan_name||'Loan'):''}
+        </div>
+        <div style="margin-top:6px">
+          <button class="btn mini" onclick="editRecord('transaction','${x.id}')">Edit</button>
+          <button class="btn danger mini" onclick="deleteTransaction('${x.id}')">Delete</button>
+        </div>
+      </div>
+      <div class="right">
+        <b class="${plus?'green':'red'}">${plus?'+':'-'}${money(x.amount)}</b>
+        <div class="small">${x.transaction_type}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+  function reminderRows(){if(!D.reminders.length)return '<div class="empty">No reminders.</div>';
   return D.reminders.map(r=>{
     const title=r.title||r.name||'Reminder';
     const date=r.reminder_date||r.due_date||'—';
