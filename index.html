@@ -559,8 +559,10 @@ async function saveForm(e){
   }catch(err){alert('Save failed: '+(err.message||err));}
 }
 
-function editRecord(type,id){openModal(type,id)}
-
+function editRecord(type,id){
+  if(type==='transaction')type='tx';
+  openModal(type,id);
+}
 async function deleteRecord(type,id,label){
   if(!confirm('Delete '+(label||'this record')+'? This cannot be undone.'))return;
   try{
