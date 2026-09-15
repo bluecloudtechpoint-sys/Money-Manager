@@ -713,7 +713,95 @@ function backup(){
     alert('Backup failed: '+(err.message||err));
   }
 }
-function restoreFile(e){alert('Cloud restore is intentionally disabled in this version to prevent accidental overwrites. Use the exported backup as a safe archive.')}
+async function restoreFile(e){
+  const file=e.target.files?.[0];
+  e.target.value='';
+  if(!file)return;
+
+  try{
+    const text=await file.text();
+    const backupData=JSON.parse(text);
+
+    const data=backupData.data||backupData;
+
+    if(
+      !data ||
+      !Array.isArray(data.customers) ||
+      !Array.isArray(data.banks) ||
+      !Array.isArray(data.loans) ||
+      !Array.isArray(data.emis) ||
+      !Array.isArray(data.tx) ||
+      !Array.isArray(data.reminders)
+    ){
+      throw new Error('This is not a valid Money Manager backup file.');
+    }
+
+    const total=
+      data.customers.length+
+      data.banks.length+
+      data.loans.length+
+      data.emis.length+
+      data.tx.length+
+      data.reminders.length;
+
+    if(!confirm(
+      'Restore this backup?\n\n'+
+      'Records to restore: '+total+'\n\n'+
+      'This will replace your current cloud data.\n'+
+      'A safety backup will be downloaded first.\n\n'+
+      'Continue?'
+    ))return;
+
+    backup();
+
+    if(!confirm(
+      'Final confirmation\n\n'+
+      'Your current cloud data will now be replaced by this backup.\n\n'+
+      'Continue with restore?'
+    ))return;
+
+    const tables=[
+      'transactions',
+      'emis',
+      'loans',
+      'banks',
+      'customers',
+      'reminders'
+    ];
+
+    for(const table of tables){
+      const {error}=await sb.from(table).delete().eq('user_id',USER.id);
+      if(error)throw error;
+    }
+
+    const cleanRows=rows=>
+      rows.map(({user_id,...row})=>({...row,user_id:USER.id}));
+
+    const restoreTable=async(table,rows)=>{
+      if(!rows.length)return;
+      const {error}=await sb.from(table).insert(cleanRows(rows));
+      if(error)throw error;
+    };
+
+    await restoreTable('customers',data.customers);
+    await restoreTable('banks',data.banks);
+    await restoreTable('loans',data.loans);
+    await restoreTable('emis',data.emis);
+    await restoreTable('transactions',data.tx);
+    await restoreTable('reminders',data.reminders);
+
+    if(data.settings){
+      D.settings=data.settings;
+      localStorage.setItem('mm_settings',JSON.stringify(D.settings));
+    }
+
+    await init();
+
+    alert('Backup restored successfully.');
+  }catch(err){
+    alert('Restore failed: '+(err.message||err));
+  }
+}
 function exportCSV(){
   const rows=[['Date','Type','Description','Customer','Amount','Method'],...D.tx.map(x=>[x.transaction_date,x.transaction_type,x.description||'',cname(x.customer_id),x.amount,x.payment_method])];
   const csv=rows.map(r=>r.map(v=>'"'+String(v).replaceAll('"','""')+'"').join(',')).join('\n');
