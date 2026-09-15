@@ -316,9 +316,52 @@ function loanRow(l){
   <div class="right"><span class="pill ${left===0?'green':'blue'}">${left===0?'Paid':'Active'}</span>${left?`<br><button class="btn" style="padding:7px 9px;margin-top:6px" onclick="quickEMI('${l.id}')">Mark Paid</button>`:''}</div></div>`;
 }
 function emiRows(){
-  const rows=D.emis.filter(e=>e.status!=='paid').slice(0,10);
+  const todayDate=today();
+
+  const rows=D.emis
+    .filter(e=>e.status!=='paid')
+    .sort((a,b)=>{
+      const aOver=a.due_date<todayDate;
+      const bOver=b.due_date<todayDate;
+
+      const aRank=aOver?0:(a.due_date===todayDate?1:2);
+      const bRank=bOver?0:(b.due_date===todayDate?1:2);
+
+      return aRank-bRank || String(a.due_date).localeCompare(String(b.due_date));
+    })
+    .slice(0,10);
+
   if(!rows.length)return '<div class="empty">No pending EMIs.</div>';
-  return rows.map(e=>{const l=D.loans.find(x=>x.id===e.loan_id);return `<div class="item"><div class="item-main"><b>${esc(l?.loan_name||'Loan')} — EMI #${e.emi_number}</b><div class="small">Due ${e.due_date}</div>${actionButtons('emi',e.id,'EMI #'+e.emi_number)}</div><div class="right"><b>${money(e.amount)}</b><br><button class="btn" style="padding:6px 8px;margin-top:5px" onclick="payEmi('${e.id}')">Mark Paid</button></div></div>`}).join('');
+
+  return rows.map(e=>{
+    const l=D.loans.find(x=>x.id===e.loan_id);
+
+    let status='Upcoming';
+    if(e.due_date<todayDate)status='Overdue';
+    else if(e.due_date===todayDate)status='Due Today';
+
+    const statusStyle=
+      status==='Overdue'
+        ? 'background:#fee2e2;color:#991b1b'
+        : status==='Due Today'
+          ? 'background:#ffedd5;color:#9a3412'
+          : 'background:#dbeafe;color:#1d4ed8';
+
+    return `<div class="item">
+      <div class="item-main">
+        <b>${esc(l?.loan_name||'Loan')} — EMI #${e.emi_number}</b>
+        <div class="small">Due ${e.due_date}</div>
+        <div style="margin-top:5px">
+          <span class="pill" style="${statusStyle}">${status}</span>
+        </div>
+        ${actionButtons('emi',e.id,'EMI #'+e.emi_number)}
+      </div>
+      <div class="right">
+        <b>${money(e.amount)}</b><br>
+        <button class="btn" style="padding:6px 8px;margin-top:5px" onclick="payEmi('${e.id}')">Mark Paid</button>
+      </div>
+    </div>`;
+  }).join('');
 }
 function emiAllRows(){
   if(!D.emis.length)return '<div class="empty">No EMI records.</div>';
