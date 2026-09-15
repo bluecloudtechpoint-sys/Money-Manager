@@ -679,8 +679,39 @@ async function requestNotify(show=true){
 }
 function setBiz(){D.settings.business=$('biz').value.trim()||'Money Manager';localStorage.setItem('mm_settings',JSON.stringify(D.settings));$('appTitle').textContent=D.settings.business;render('settings')}
 function backup(){
-  const payload={exported_at:new Date().toISOString(),customers:D.customers,banks:D.banks,loans:D.loans,emis:D.emis,tx:D.tx,reminders:D.reminders,settings:D.settings};
-  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(payload,null,2)],{type:'application/json'}));a.download='money-manager-cloud-backup-'+today()+'.json';a.click();
+  try{
+    const payload={
+      app:'Money Manager',
+      backup_version:2,
+      exported_at:new Date().toISOString(),
+      data:{
+        customers:D.customers,
+        banks:D.banks,
+        loans:D.loans,
+        emis:D.emis,
+        tx:D.tx,
+        reminders:D.reminders,
+        settings:D.settings
+      }
+    };
+
+    const json=JSON.stringify(payload,null,2);
+    const blob=new Blob([json],{type:'application/json'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+
+    a.href=url;
+    a.download='money-manager-backup-'+today()+'.json';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+
+    setTimeout(()=>URL.revokeObjectURL(url),1000);
+
+    alert('Backup downloaded successfully.');
+  }catch(err){
+    alert('Backup failed: '+(err.message||err));
+  }
 }
 function restoreFile(e){alert('Cloud restore is intentionally disabled in this version to prevent accidental overwrites. Use the exported backup as a safe archive.')}
 function exportCSV(){
