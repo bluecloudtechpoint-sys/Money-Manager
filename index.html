@@ -985,7 +985,7 @@ function exportCSV(){
       .reduce((a,x)=>a+Number(x.amount||0),0);
 
     const paid=D.tx
-      .filter(x=>['money_paid','udhar_given','emi_paid'].includes(x.transaction_type))
+     .filter(x=>['money_paid','emi_paid'].includes(x.transaction_type))
       .reduce((a,x)=>a+Number(x.amount||0),0);
 
     const given=D.tx
@@ -1088,7 +1088,7 @@ function exportPDF(){
       .reduce((a,x)=>a+Number(x.amount||0),0);
 
     const paid=D.tx
-      .filter(x=>['money_paid','udhar_given','emi_paid'].includes(x.transaction_type))
+      .filter(x=>['money_paid','emi_paid'].includes(x.transaction_type))
       .reduce((a,x)=>a+Number(x.amount||0),0);
 
     const given=D.tx
