@@ -253,10 +253,18 @@ function render(p='dash'){
      <div class="section"><div class="title">Loans</div>
        <div class="card">${D.loans.length?D.loans.map(loanRow).join(''):'<div class="empty">No loans added.</div>'}</div>
      </div>
-     <div class="section"><div class="title">EMI Records</div>
-       <div class="card">${emiAllRows()}</div>
-     </div>`;
-
+     <div class="section">
+  <div class="title">EMI Records</div>
+  <div class="actions" style="margin:8px 0">
+    <button class="btn alt" onclick="document.getElementById('emiRecordsList').innerHTML=emiAllRows('all')">All</button>
+    <button class="btn alt" onclick="document.getElementById('emiRecordsList').innerHTML=emiAllRows('all')">Pending</button>
+    <button class="btn alt" onclick="document.getElementById('emiRecordsList').innerHTML=emiAllRows('overdue')">Overdue</button>
+    <button class="btn alt" onclick="document.getElementById('emiRecordsList').innerHTML=emiAllRows('today')">Due Today</button>
+    <button class="btn alt" onclick="document.getElementById('emiRecordsList').innerHTML=emiAllRows('upcoming')">Upcoming</button>
+    <button class="btn alt" onclick="document.getElementById('emiRecordsList').innerHTML=emiAllRows('paid')">Paid</button>
+  </div>
+  <div id="emiRecordsList" class="card">${emiAllRows()}</div>
+</div>`;
   if(p==='tx')$('app').innerHTML=
     `<div class="actions"><button class="btn" onclick="openModal('tx')">+ Transaction</button></div>
      <div class="card">${txRows(200)}</div>`;
@@ -363,16 +371,47 @@ function emiRows(){
     </div>`;
   }).join('');
 }
-function emiAllRows(){
+function emiAllRows(filter='all'){
   if(!D.emis.length)return '<div class="empty">No EMI records.</div>';
-  return D.emis.map(e=>{
+
+  const todayDate=today();
+
+  const filtered=D.emis.filter(e=>{
+    if(filter==='paid')return e.status==='paid';
+    if(e.status==='paid')return false;
+    if(filter==='overdue')return e.due_date<todayDate;
+    if(filter==='today')return e.due_date===todayDate;
+    if(filter==='upcoming')return e.due_date>todayDate;
+    return true;
+  }).sort((a,b)=>{
+    if(filter==='paid'){
+      return String(b.paid_date||'').localeCompare(String(a.paid_date||''));
+    }
+    return String(a.due_date).localeCompare(String(b.due_date));
+  });
+
+  if(!filtered.length)return '<div class="empty">No EMIs in this category.</div>';
+
+  return filtered.map(e=>{
     const l=D.loans.find(x=>x.id===e.loan_id);
-    return `<div class="item"><div class="item-main"><b>${esc(l?.loan_name||'Loan')} — EMI #${e.emi_number}</b>
-      <div class="small">Due ${e.due_date} • ${money(e.amount)} • ${e.status}</div>
-      ${e.status==='paid'?`<div class="small">Paid ${money(e.paid_amount||e.amount)} on ${e.paid_date||'—'}</div>`:''}
-      ${actionButtons('emi',e.id,'EMI #'+e.emi_number)}</div>
-      <div class="right"><span class="pill ${e.status==='paid'?'green':'blue'}">${e.status==='paid'?'Paid':'Pending'}</span>
-      ${e.status!=='paid'?`<br><button class="btn" style="padding:6px 8px;margin-top:5px" onclick="payEmi('${e.id}')">Mark Paid</button>`:''}</div></div>`;
+
+    let status='Upcoming';
+    if(e.status==='paid')status='Paid';
+    else if(e.due_date<todayDate)status='Overdue';
+    else if(e.due_date===todayDate)status='Due Today';
+
+    return `<div class="item">
+      <div class="item-main">
+        <b>${esc(l?.loan_name||'Loan')} — EMI #${e.emi_number}</b>
+        <div class="small">Due ${e.due_date} • ${money(e.amount)} • ${status}</div>
+        ${e.status==='paid'?`<div class="small">Paid ${money(e.paid_amount||e.amount)} on ${e.paid_date||'—'}</div>`:''}
+        ${actionButtons('emi',e.id,'EMI #'+e.emi_number)}
+      </div>
+      <div class="right">
+        <span class="pill ${e.status==='paid'?'green':'blue'}">${status}</span>
+        ${e.status!=='paid'?`<br><button class="btn" style="padding:6px 8px;margin-top:5px" onclick="payEmi('${e.id}')">Mark Paid</button>`:''}
+      </div>
+    </div>`;
   }).join('');
 }
 function cname(id){return (D.customers.find(c=>c.id===id)||{}).name||'—'}
