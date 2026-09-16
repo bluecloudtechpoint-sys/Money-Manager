@@ -501,7 +501,7 @@ function emiRows(){
           ? 'background:#ffedd5;color:#9a3412'
           : 'background:#dbeafe;color:#1d4ed8';
 
-    return `<div class="item">
+   return `<div class="item" style="${status==='Overdue'?'background:#fff5f5;border-left:4px solid #dc2626;padding-left:10px':status==='Due Today'?'background:#fffaf0;border-left:4px solid #f59e0b;padding-left:10px':''}">
       <div class="item-main">
         <b>${esc(l?.loan_name||'Loan')} — EMI #${e.emi_number}</b>
         <div class="small">Due ${e.due_date}</div>
