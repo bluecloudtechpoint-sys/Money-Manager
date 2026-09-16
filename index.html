@@ -99,7 +99,7 @@ hr{border:0;border-top:1px solid #eee;margin:14px 0}
   <div class="sheet">
     <button class="close" onclick="closeModal()">×</button>
     <h2 id="mh">Add</h2>
-    <form id="form" onsubmit="saveForm(event)"><div id="fields"></div><button class="btn" style="width:100%">Save</button></form>
+   <form id="form" onsubmit="saveForm(event)"><div id="fields"></div><button id="saveBtn" type="submit" class="btn" style="width:100%">Save</button></form>
   </div>
 </div>
 
@@ -111,6 +111,7 @@ const SUPABASE_URL="https://yqlcxztvdyehorhykgwc.supabase.co";
 const SUPABASE_KEY="sb_publishable_W5rirgN1NiEu5Syyn0fH_Q_U_WLx9UA";
 let sb=null;
 let USER=null;
+let SAVE_IN_PROGRESS=false;
 
 function setAuthMsg(t, ok=false){
   const el=document.getElementById("authMsg");
@@ -741,8 +742,22 @@ function closeModal(){$('modal').style.display='none'}
 
 async function saveForm(e){
   e.preventDefault();
+
+  if(SAVE_IN_PROGRESS)return;
+
+  SAVE_IN_PROGRESS=true;
+
+  const saveBtn=$('saveBtn');
+  if(saveBtn){
+    saveBtn.disabled=true;
+    saveBtn.textContent='Saving…';
+    saveBtn.style.opacity='.65';
+    saveBtn.style.cursor='not-allowed';
+  }
+
   const t=$('modal').dataset.type;
   const editId=$('modal').dataset.editId||null;
+
   try{
     if(t==='bank'){
       const patch={name:$('bank_name').value.trim()};
@@ -808,15 +823,35 @@ async function saveForm(e){
           d.setMonth(d.getMonth()+1);
         }
       }else{
-        const l=await insert('loans',patch);D.loans.unshift(l);
+        const l=await insert('loans',patch);
+        D.loans.unshift(l);
+
         let d=new Date(patch.start_date+'T00:00:00');
+        const emiRows=[];
+
         for(let i=1;i<=l.total_emis;i++){
-          const em=await insert('emis',{loan_id:l.id,emi_number:i,due_date:d.toISOString().slice(0,10),amount:l.emi_amount,status:'pending'});
-          D.emis.push(em);d.setMonth(d.getMonth()+1);
+          emiRows.push({
+            loan_id:l.id,
+            emi_number:i,
+            due_date:d.toISOString().slice(0,10),
+            amount:l.emi_amount,
+            status:'pending'
+          });
+
+          d.setMonth(d.getMonth()+1);
+        }
+
+        if(emiRows.length){
+          const {data:ems,error:emiError}=await sb
+            .from('emis')
+            .insert(emiRows.map(row=>({...row,user_id:USER.id})))
+            .select();
+
+          if(emiError)throw emiError;
+
+          D.emis.push(...(ems||[]));
         }
       }
-    }
-
     if(t==='tx'){
       const patch={account_type:'personal',customer_id:$('customer_id')?.value||null,loan_id:$('loan_id')?.value||null,transaction_type:$('kind').value,amount:Number($('amt').value)||0,payment_method:$('method').value,description:$('desc').value.trim(),transaction_date:$('date').value};
       if(!patch.description)throw new Error('Description is required.');
@@ -846,8 +881,26 @@ async function saveForm(e){
       }
     }
 
-    closeModal();render('dash');
-  }catch(err){alert('Save failed: '+(err.message||err));}
+    closeModal();
+render('dash');
+
+  }catch(err){
+    alert('Save failed: '+(err.message||err));
+
+    SAVE_IN_PROGRESS=false;
+
+    const saveBtn=$('saveBtn');
+    if(saveBtn){
+      saveBtn.disabled=false;
+      saveBtn.textContent='Save';
+      saveBtn.style.opacity='';
+      saveBtn.style.cursor='';
+    }
+
+    return;
+  }
+
+  SAVE_IN_PROGRESS=false;
 }
 
 function editRecord(type,id){
