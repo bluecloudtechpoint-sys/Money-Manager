@@ -260,21 +260,71 @@ function render(p='dash'){
   const given=D.tx.filter(x=>x.transaction_type==='udhar_given').reduce((a,x)=>a+Number(x.amount||0),0);
   const recovered=D.tx.filter(x=>x.transaction_type==='udhar_recovered').reduce((a,x)=>a+Number(x.amount||0),0);
 
-  if(p==='dash')$('app').innerHTML=
+  if(p==='dash'){
+  const loanOutstanding=D.loans.reduce(
+    (a,l)=>a+Math.max(0,Number(l.principal_amount||0)-loanPaid(l.id)),0
+  );
+
+  const pendingEmis=D.emis.filter(e=>e.status!=='paid').length;
+
+  $('app').innerHTML=
     `<div class="grid">
-      <div class="card"><div class="label">Money Received</div><div class="num green">${money(rec)}</div></div>
-      <div class="card"><div class="label">Money Paid</div><div class="num red">${money(paid)}</div></div>
-      <div class="card"><div class="label">Pending Udhar</div><div class="num orange">${money(Math.max(0,given-recovered))}</div></div>
-      <div class="card"><div class="label">Monthly EMI</div><div class="num blue">${money(D.loans.reduce((a,l)=>a+Number(l.emi_amount||0),0))}</div></div>
+      <div class="card">
+        <div class="label">Money Received</div>
+        <div class="num green">${money(rec)}</div>
+      </div>
+
+      <div class="card">
+        <div class="label">Money Paid</div>
+        <div class="num red">${money(paid)}</div>
+      </div>
+
+      <div class="card">
+        <div class="label">Pending Udhar</div>
+        <div class="num orange">${money(Math.max(0,given-recovered))}</div>
+      </div>
+
+      <div class="card">
+        <div class="label">Loan Outstanding</div>
+        <div class="num blue">${money(loanOutstanding)}</div>
+      </div>
+
+      <div class="card">
+        <div class="label">Monthly EMI</div>
+        <div class="num blue">${money(D.loans.reduce((a,l)=>a+Number(l.emi_amount||0),0))}</div>
+      </div>
+
+      <div class="card">
+        <div class="label">Pending EMIs</div>
+        <div class="num">${pendingEmis}</div>
+      </div>
     </div>
+
     <div class="actions">
       <button class="btn" onclick="openModal('customer')">+ Customer</button>
       <button class="btn" onclick="openModal('loan')">+ Bank / Loan</button>
       <button class="btn alt" onclick="openModal('tx')">+ Transaction</button>
       <button class="btn warn" onclick="notifyDue()">🔔 Check Reminders</button>
     </div>
-    <div class="section"><div class="title">EMI Schedule <span class="small" style="margin-left:10px">🔴 ${D.emis.filter(e=>e.status!=='paid'&&e.due_date<today()).length} Overdue &nbsp; 🟠 ${D.emis.filter(e=>e.status!=='paid'&&e.due_date===today()).length} Due Today &nbsp; 🔵 ${D.emis.filter(e=>e.status!=='paid'&&e.due_date>today()).length} Upcoming &nbsp; 🟢 ${D.emis.filter(e=>e.status==='paid').length} Paid</span></div><div class="card">${emiRows()}</div></div>
-    <div class="section"><div class="title">Recent Activity</div><div class="card">${txRows(8)}</div></div>`;
+
+    <div class="section">
+      <div class="title">
+        EMI Schedule
+        <span class="small" style="margin-left:10px">
+          🔴 ${D.emis.filter(e=>e.status!=='paid'&&e.due_date<today()).length} Overdue
+          &nbsp; 🟠 ${D.emis.filter(e=>e.status!=='paid'&&e.due_date===today()).length} Due Today
+          &nbsp; 🔵 ${D.emis.filter(e=>e.status!=='paid'&&e.due_date>today()).length} Upcoming
+          &nbsp; 🟢 ${D.emis.filter(e=>e.status==='paid').length} Paid
+        </span>
+      </div>
+      <div class="card">${emiRows()}</div>
+    </div>
+
+    <div class="section">
+      <div class="title">Recent Activity</div>
+      <div class="card">${txRows(8)}</div>
+    </div>`;
+}
 
   if(p==='customers')$('app').innerHTML=
     `<div class="actions"><button class="btn" onclick="openModal('customer')">+ Customer</button></div>
