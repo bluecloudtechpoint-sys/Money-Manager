@@ -309,7 +309,9 @@ function render(p='dash'){
 
     <div class="section">
       <div class="title">
-        EMI Schedule
+       <div class="title">
+  EMI Schedule
+  <button class="btn alt" style="float:right;padding:6px 10px;font-size:11px" onclick="go('loans')">View All EMIs →</button>
         <span class="small" style="margin-left:10px">
           🔴 ${D.emis.filter(e=>e.status!=='paid'&&e.due_date<today()).length} Overdue
           &nbsp; 🟠 ${D.emis.filter(e=>e.status!=='paid'&&e.due_date===today()).length} Due Today
