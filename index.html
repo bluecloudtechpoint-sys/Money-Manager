@@ -252,8 +252,30 @@ async function loadCloud(){
 async function insert(table,row){const {data,error}=await sb.from(table).insert({...row,user_id:USER.id}).select().single();if(error)throw error;return data}
 async function update(table,id,patch){const {error}=await sb.from(table).update(patch).eq('id',id).eq('user_id',USER.id);if(error)throw error}
 
-function go(p,b){document.querySelectorAll('.tabs button').forEach(x=>x.classList.remove('on'));if(b)b.classList.add('on');render(p)}
+function go(p,b){
+  const tabs=document.querySelectorAll('.tabs button');
+  tabs.forEach(x=>x.classList.remove('on'));
 
+  if(b){
+    b.classList.add('on');
+  }else{
+    const map={
+      dash:'Dashboard',
+      customers:'Customers',
+      loans:'Banks & Loans',
+      tx:'Transactions',
+      reminders:'Reminders',
+      reports:'Reports',
+      settings:'Settings'
+    };
+
+    tabs.forEach(x=>{
+      if(x.textContent.trim()===map[p])x.classList.add('on');
+    });
+  }
+
+  render(p);
+}
 function render(p='dash'){
   const rec=D.tx.filter(x=>['money_received','udhar_recovered'].includes(x.transaction_type)).reduce((a,x)=>a+Number(x.amount||0),0);
   const paid=D.tx.filter(x=>['money_paid','emi_paid'].includes(x.transaction_type)).reduce((a,x)=>a+Number(x.amount||0),0);
