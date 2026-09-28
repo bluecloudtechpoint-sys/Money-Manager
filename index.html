@@ -30,29 +30,22 @@ nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid 
 .bank-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
 hr{border:0;border-top:1px solid #eee;margin:14px 0}
 
-.emi-filterbar{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin:10px 0 14px}
-.emi-filter{border:1px solid #e1e3e8;border-radius:12px;padding:10px 8px;background:#f5f6f8;color:#202329;font-weight:750;font-size:12px;cursor:pointer}
-.emi-filter.on{background:#111318;color:#fff;border-color:#111318}
-.emi-group{background:#fff;border:1px solid #e3e5e9;border-radius:16px;margin-bottom:10px;overflow:hidden}
-.emi-group-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:15px 16px;cursor:pointer}
-.emi-group-head:hover{background:#fafbfc}
-.emi-group-left{min-width:0}
-.emi-group-title{font-size:15px;font-weight:800}
-.emi-group-meta{font-size:11px;color:#747983;margin-top:4px}
-.emi-group-right{display:flex;align-items:center;gap:12px;text-align:right}
-.emi-group-amount{font-weight:800;font-size:14px}
-.emi-chevron{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#eef0f4;font-size:18px;transition:.15s}
-.emi-group.open .emi-chevron{transform:rotate(90deg);background:#111318;color:#fff}
-.emi-group-body{display:none;border-top:1px solid #eee;padding:0 16px 8px}
-.emi-group.open .emi-group-body{display:block}
-.emi-row{display:flex;justify-content:space-between;gap:12px;padding:13px 0;border-bottom:1px solid #eee;align-items:center}
-.emi-row:last-child{border-bottom:0}
-.emi-row-title{font-weight:750;font-size:13px}
-.emi-row-meta{font-size:11px;color:#747983;margin-top:3px}
-.emi-row-right{display:flex;align-items:center;gap:8px;text-align:right}
-.emi-status{font-size:10px;padding:5px 8px;border-radius:999px;white-space:nowrap}
-.emi-status.upcoming{background:#edf2ff;color:#2867d8}.emi-status.overdue{background:#fff0f0;color:#c0392b}.emi-status.today{background:#fff4e4;color:#b76b00}.emi-status.paid{background:#edf8ef;color:#16803b}
-@media(max-width:680px){.emi-filterbar{grid-template-columns:repeat(3,1fr)}.emi-group-right{gap:7px}.emi-group-amount{font-size:12px}.emi-row{align-items:flex-start}.emi-row-right{flex-direction:column;align-items:flex-end}}
+.emi-filterbar{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:8px 0 12px}
+.emi-filter{border:0;border-radius:12px;padding:11px 8px;background:#e7e9ee;color:#111318;font-weight:750;cursor:pointer}
+.emi-filter.on{background:#111318;color:#fff}
+.emi-loan-card{background:#fff;border:1px solid #e5e6e9;border-radius:16px;margin-bottom:10px;overflow:hidden}
+.emi-loan-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:15px 16px;cursor:pointer}
+.emi-loan-head:hover{background:#fafafa}
+.emi-loan-meta{font-size:11px;color:#737780;margin-top:4px}
+.emi-arrow{font-size:22px;line-height:1;transition:transform .15s ease}
+.emi-loan-card.open .emi-arrow{transform:rotate(90deg)}
+.emi-loan-summary{display:flex;gap:7px;flex-wrap:wrap;margin-top:8px}
+.emi-loan-summary span{font-size:10px;padding:4px 8px;border-radius:999px;background:#f0f2f5;color:#4b5563}
+.emi-loan-body{display:none;border-top:1px solid #eee;padding:0 16px 10px}
+.emi-loan-card.open .emi-loan-body{display:block}
+.emi-record{display:flex;justify-content:space-between;gap:10px;padding:12px 0;border-bottom:1px solid #eee}
+.emi-record:last-child{border-bottom:0}
+@media(max-width:560px){.emi-filterbar{grid-template-columns:repeat(2,1fr)}}
 </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
@@ -379,14 +372,14 @@ function render(p='dash'){
      </div>
      <div class="section">
   <div class="title">EMI Records</div>
-  <div class="small" style="margin-bottom:8px">Select a loan to view its EMI records. Each loan stays separate.</div>
+  <div class="small" style="margin-bottom:8px">Each loan is kept separate. Click the arrow to view its EMI records.</div>
   <div class="emi-filterbar" id="emiFilterBar">
-    <button class="emi-filter on" data-filter="all" onclick="setEmiFilter('all',this)">All</button>
-    <button class="emi-filter" data-filter="pending" onclick="setEmiFilter('pending',this)">Pending</button>
-    <button class="emi-filter" data-filter="overdue" onclick="setEmiFilter('overdue',this)">Overdue</button>
-    <button class="emi-filter" data-filter="today" onclick="setEmiFilter('today',this)">Due Today</button>
-    <button class="emi-filter" data-filter="upcoming" onclick="setEmiFilter('upcoming',this)">Upcoming</button>
-    <button class="emi-filter" data-filter="paid" onclick="setEmiFilter('paid',this)">Paid</button>
+    <button class="emi-filter on" onclick="setEmiFilter('all',this)">All</button>
+    <button class="emi-filter" onclick="setEmiFilter('pending',this)">Pending</button>
+    <button class="emi-filter" onclick="setEmiFilter('overdue',this)">Overdue</button>
+    <button class="emi-filter" onclick="setEmiFilter('today',this)">Due Today</button>
+    <button class="emi-filter" onclick="setEmiFilter('upcoming',this)">Upcoming</button>
+    <button class="emi-filter" onclick="setEmiFilter('paid',this)">Paid</button>
   </div>
   <div id="emiRecordsList">${emiLoanGroups('all')}</div>
 </div>`;
@@ -646,67 +639,54 @@ function setEmiFilter(filter,btn){
   if(box)box.innerHTML=emiLoanGroups(filter);
 }
 
-function emiLoanGroups(filter='all'){
-  if(!D.emis.length)return '<div class="empty">No EMI records.</div>';
-  const todayDate=today();
-  const loans=D.loans.map(l=>{
-    const all=D.emis.filter(e=>e.loan_id===l.id);
-    const filtered=all.filter(e=>{
-      if(filter==='paid')return e.status==='paid';
-      if(filter==='pending')return e.status!=='paid';
-      if(filter==='overdue')return e.status!=='paid'&&String(e.due_date)<todayDate;
-      if(filter==='today')return e.status!=='paid'&&String(e.due_date)===todayDate;
-      if(filter==='upcoming')return e.status!=='paid'&&String(e.due_date)>todayDate;
-      return true;
-    }).sort((a,b)=>String(a.due_date).localeCompare(String(b.due_date))||Number(a.emi_number)-Number(b.emi_number));
-    return {l,all,filtered};
-  }).filter(x=>x.filtered.length);
-
-  if(!loans.length)return '<div class="card"><div class="empty">No EMIs in this category.</div></div>';
-
-  return loans.map(({l,all,filtered})=>{
-    const bank=(D.banks.find(b=>b.id===l.bank_id)||{}).name||'Finance Company';
-    const pending=all.filter(e=>e.status!=='paid').length;
-    const paid=all.filter(e=>e.status==='paid').length;
-    const amount=filtered.reduce((a,e)=>a+Number(e.amount||0),0);
-    const key='emiGroup_'+l.id.replace(/[^a-zA-Z0-9_-]/g,'');
-    return `<div class="emi-group" id="${key}">
-      <div class="emi-group-head" onclick="toggleEmiGroup('${key}')">
-        <div class="emi-group-left">
-          <div class="emi-group-title">${esc(l.loan_name||'Loan')}</div>
-          <div class="emi-group-meta">${esc(bank)} • ${paid}/${all.length} paid • ${pending} pending</div>
-        </div>
-        <div class="emi-group-right">
-          <div><div class="emi-group-amount">${money(amount)}</div><div class="emi-group-meta">${filter==='all'?'total records':filter}</div></div>
-          <div class="emi-chevron">›</div>
-        </div>
-      </div>
-      <div class="emi-group-body">
-        ${filtered.map(e=>{
-          let status='Upcoming',cls='upcoming';
-          if(e.status==='paid'){status='Paid';cls='paid';}
-          else if(String(e.due_date)<todayDate){status='Overdue';cls='overdue';}
-          else if(String(e.due_date)===todayDate){status='Due Today';cls='today';}
-          return `<div class="emi-row">
-            <div>
-              <div class="emi-row-title">EMI #${e.emi_number}</div>
-              <div class="emi-row-meta">Due ${e.due_date} • ${money(e.amount)}${e.status==='paid'?` • Paid ${e.paid_date||'—'}`:''}</div>
-              ${actionButtons('emi',e.id,'EMI #'+e.emi_number)}
-            </div>
-            <div class="emi-row-right">
-              <span class="emi-status ${cls}">${status}</span>
-              ${e.status!=='paid'?`<button class="btn" style="padding:6px 9px;font-size:11px" onclick="event.stopPropagation();payEmi('${e.id}')">Mark Paid</button>`:''}
-            </div>
-          </div>`;
-        }).join('')}
-      </div>
-    </div>`;
-  }).join('');
+function toggleEmiLoan(id){
+  const card=document.getElementById('emi-loan-'+id);
+  if(card)card.classList.toggle('open');
 }
 
-function toggleEmiGroup(id){
-  const el=$(id);
-  if(el)el.classList.toggle('open');
+function emiLoanGroups(filter='all'){
+  if(!D.loans.length)return '<div class="empty">No loans added.</div>';
+  const todayDate=today();
+  const groups=D.loans.map(l=>{
+    let rows=D.emis.filter(e=>e.loan_id===l.id);
+    rows=rows.filter(e=>{
+      if(filter==='paid')return e.status==='paid';
+      if(filter==='pending')return e.status!=='paid';
+      if(e.status==='paid')return false;
+      if(filter==='overdue')return e.due_date<todayDate;
+      if(filter==='today')return e.due_date===todayDate;
+      if(filter==='upcoming')return e.due_date>todayDate;
+      return true;
+    });
+    rows.sort((a,b)=>String(a.due_date).localeCompare(String(b.due_date))||Number(a.emi_number||0)-Number(b.emi_number||0));
+    if(!rows.length)return '';
+    const paidCount=D.emis.filter(e=>e.loan_id===l.id&&e.status==='paid').length;
+    const pendingCount=D.emis.filter(e=>e.loan_id===l.id&&e.status!=='paid').length;
+    const total=rows.reduce((a,e)=>a+Number(e.amount||0),0);
+    const bank=(D.banks.find(b=>b.id===l.bank_id)||{}).name||'Finance Company';
+    return `<div class="emi-loan-card" id="emi-loan-${l.id}">
+      <div class="emi-loan-head" onclick="toggleEmiLoan('${l.id}')">
+        <div style="min-width:0;flex:1">
+          <b>${esc(l.loan_name||'Loan')}</b>
+          <div class="emi-loan-meta">${esc(bank)}${l.loan_number?' • '+esc(l.loan_number):''}</div>
+          <div class="emi-loan-summary"><span>${paidCount} Paid</span><span>${pendingCount} Pending</span><span>${money(total)}</span></div>
+        </div>
+        <div class="emi-arrow">›</div>
+      </div>
+      <div class="emi-loan-body">${rows.map(e=>{
+        let status='Upcoming';
+        if(e.status==='paid')status='Paid';
+        else if(e.due_date<todayDate)status='Overdue';
+        else if(e.due_date===todayDate)status='Due Today';
+        const cls=status==='Overdue'?'red':status==='Paid'?'green':status==='Due Today'?'orange':'blue';
+        return `<div class="emi-record">
+          <div class="item-main"><b>EMI #${e.emi_number}</b><div class="small">Due ${e.due_date} • ${money(e.amount)}</div>${e.status==='paid'?`<div class="small">Paid ${money(e.paid_amount||e.amount)} on ${e.paid_date||'—'}</div>`:''}${actionButtons('emi',e.id,'EMI #'+e.emi_number)}</div>
+          <div class="right"><span class="pill ${cls}">${status}</span>${e.status!=='paid'?`<br><button class="btn" style="padding:6px 8px;margin-top:5px" onclick="payEmi('${e.id}')">Mark Paid</button>`:''}</div>
+        </div>`;
+      }).join('')}</div>
+    </div>`;
+  }).join('');
+  return groups||'<div class="empty">No EMIs in this category.</div>';
 }
 
 function cname(id){return (D.customers.find(c=>c.id===id)||{}).name||'—'}
