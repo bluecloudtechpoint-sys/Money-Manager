@@ -137,7 +137,8 @@ let D={customers:[],banks:[],loans:[],emis:[],tx:[],reminders:[],settings:{busin
 
 const $=id=>document.getElementById(id);
 const money=n=>'₹'+Math.round(Number(n)||0).toLocaleString('en-IN');
-const today=()=>new Date().toISOString().slice(0,10);
+const localDate=d=>{const x=d instanceof Date?d:new Date(d);return x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0')};
+const today=()=>localDate(new Date());
 const esc=s=>String(s??'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
 
 async function signUp(){
@@ -813,11 +814,11 @@ async function saveForm(e){
           const existing=D.emis.find(x=>x.loan_id===editId&&x.emi_number===i);
           if(existing && existing.status==='paid'){ d.setMonth(d.getMonth()+1); continue; }
           if(existing){
-            const due=d.toISOString().slice(0,10);
+            const due=localDate(d);
             await update('emis',existing.id,{due_date:due,amount:patch.emi_amount});
             existing.due_date=due;existing.amount=patch.emi_amount;
           }else{
-            const em=await insert('emis',{loan_id:editId,emi_number:i,due_date:d.toISOString().slice(0,10),amount:patch.emi_amount,status:'pending'});
+            const em=await insert('emis',{loan_id:editId,emi_number:i,due_date:localDate(d),amount:patch.emi_amount,status:'pending'});
             D.emis.push(em);
           }
           d.setMonth(d.getMonth()+1);
@@ -833,7 +834,7 @@ async function saveForm(e){
           emiRows.push({
             loan_id:l.id,
             emi_number:i,
-            due_date:d.toISOString().slice(0,10),
+            due_date:localDate(d),
             amount:l.emi_amount,
             status:'pending'
           });
@@ -852,7 +853,6 @@ async function saveForm(e){
           D.emis.push(...(ems||[]));
         }
       }
-    }
     if(t==='tx'){
       const patch={account_type:'personal',customer_id:$('customer_id')?.value||null,loan_id:$('loan_id')?.value||null,transaction_type:$('kind').value,amount:Number($('amt').value)||0,payment_method:$('method').value,description:$('desc').value.trim(),transaction_date:$('date').value};
       if(!patch.description)throw new Error('Description is required.');
@@ -959,7 +959,7 @@ async function payEmi(emiId,amount,date,method,syncTx=true){
   if(!e||e.status==='paid')return;
 
   const amt=Number(amount||e.amount);
-  const today=new Date().toISOString().slice(0,10);
+  const today=localDate(new Date());
 
   const paymentDate=prompt(
     'Payment Date (YYYY-MM-DD):',
