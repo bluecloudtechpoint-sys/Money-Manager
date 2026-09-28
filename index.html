@@ -290,39 +290,22 @@ function render(p='dash'){
     (a,l)=>a+Math.max(0,Number(l.principal_amount||0)-loanPaid(l.id)),0
   );
 
-  const pendingEmis=D.emis.filter(e=>e.status!=='paid').length;
+  const todayDate=today();
+  const thisMonthPrefix=todayDate.slice(0,7);
+  const unpaid=D.emis.filter(e=>e.status!=='paid');
+  const monthEmis=unpaid.filter(e=>String(e.due_date||'').slice(0,7)===thisMonthPrefix);
+  const overdueEmis=unpaid.filter(e=>String(e.due_date||'')<todayDate);
+  const monthlyEmi=D.loans.reduce((a,l)=>a+Number(l.emi_amount||0),0);
+  const monthDueAmount=monthEmis.reduce((a,e)=>a+Number(e.amount||0),0);
+  const overdueAmount=overdueEmis.reduce((a,e)=>a+Number(e.amount||0),0);
+  const totalLoanAmount=D.loans.reduce((a,l)=>a+Number(l.principal_amount||0),0);
 
   $('app').innerHTML=
     `<div class="grid">
-      <div class="card">
-        <div class="label">Money Received</div>
-        <div class="num green">${money(rec)}</div>
-      </div>
-
-      <div class="card">
-        <div class="label">Money Paid</div>
-        <div class="num red">${money(paid)}</div>
-      </div>
-
-      <div class="card">
-        <div class="label">Pending Udhar</div>
-        <div class="num orange">${money(Math.max(0,given-recovered))}</div>
-      </div>
-
-      <div class="card">
-        <div class="label">Loan Outstanding</div>
-        <div class="num blue">${money(loanOutstanding)}</div>
-      </div>
-
-      <div class="card">
-        <div class="label">Monthly EMI</div>
-        <div class="num blue">${money(D.loans.reduce((a,l)=>a+Number(l.emi_amount||0),0))}</div>
-      </div>
-
-      <div class="card">
-        <div class="label">Pending EMIs</div>
-        <div class="num">${pendingEmis}</div>
-      </div>
+      <div class="card"><div class="label">Money Received</div><div class="num green">${money(rec)}</div></div>
+      <div class="card"><div class="label">Money Paid</div><div class="num red">${money(paid)}</div></div>
+      <div class="card"><div class="label">Pending Udhar</div><div class="num orange">${money(Math.max(0,given-recovered))}</div></div>
+      <div class="card"><div class="label">Loan Outstanding</div><div class="num blue">${money(loanOutstanding)}</div></div>
     </div>
 
     <div class="actions">
@@ -333,18 +316,28 @@ function render(p='dash'){
     </div>
 
     <div class="section">
-      <div class="title">
-       <div class="title">
-  EMI Schedule
-  <button class="btn alt" style="float:right;padding:6px 10px;font-size:11px" onclick="go('loans')">View All EMIs →</button>
-        <span class="small" style="margin-left:10px">
-          🔴 ${D.emis.filter(e=>e.status!=='paid'&&e.due_date<today()).length} Overdue
-          &nbsp; 🟠 ${D.emis.filter(e=>e.status!=='paid'&&e.due_date===today()).length} Due Today
-          &nbsp; 🔵 ${D.emis.filter(e=>e.status!=='paid'&&e.due_date>today()).length} Upcoming
-          &nbsp; 🟢 ${D.emis.filter(e=>e.status==='paid').length} Paid
-        </span>
+      <div class="title">Loan Overview</div>
+      <div class="grid">
+        <div class="card"><div class="label">Total Loan Amount</div><div class="num blue">${money(totalLoanAmount)}</div></div>
+        <div class="card"><div class="label">Loan Outstanding</div><div class="num blue">${money(loanOutstanding)}</div></div>
+        <div class="card"><div class="label">This Month EMI Due</div><div class="num orange">${money(monthDueAmount)}</div></div>
+        <div class="card"><div class="label">Total Overdue</div><div class="num red">${money(overdueAmount)}</div></div>
       </div>
-      <div class="card">${emiRows()}</div>
+    </div>
+
+    <div class="section">
+      <div class="title">This Month's EMIs <span class="small">${monthEmis.length} EMI${monthEmis.length===1?'':'s'} due</span></div>
+      <div class="card">${emiRows('month')}</div>
+    </div>
+
+    <div class="section">
+      <div class="title">Loan-wise EMI Summary</div>
+      <div class="grid">${loanMonthlyCards()}</div>
+    </div>
+
+    <div class="section">
+      <div class="title">Overdue EMIs <span class="small">${overdueEmis.length} overdue</span></div>
+      <div class="card">${emiRows('overdue')}</div>
     </div>
 
     <div class="section">
@@ -472,54 +465,60 @@ function loanRow(l){
   ${actionButtons('loan',l.id,l.loan_name)}</div>
   <div class="right"><span class="pill ${left===0?'green':'blue'}">${left===0?'Paid':'Active'}</span>${left?`<br><button class="btn" style="padding:7px 9px;margin-top:6px" onclick="quickEMI('${l.id}')">Mark Paid</button>`:''}</div></div>`;
 }
-function emiRows(){
+function loanMonthlyCards(){
+  if(!D.loans.length)return '<div class="empty">No loans added.</div>';
   const todayDate=today();
-
-  const rows=D.emis
-    .filter(e=>e.status!=='paid')
-    .sort((a,b)=>{
-      const aOver=a.due_date<todayDate;
-      const bOver=b.due_date<todayDate;
-
-      const aRank=aOver?0:(a.due_date===todayDate?1:2);
-      const bRank=bOver?0:(b.due_date===todayDate?1:2);
-
-      return aRank-bRank || String(a.due_date).localeCompare(String(b.due_date));
-    })
-    .slice(0,10);
-
-  if(!rows.length)return '<div class="empty">No pending EMIs.</div>';
-
-  return rows.map(e=>{
-    const l=D.loans.find(x=>x.id===e.loan_id);
-
-    let status='Upcoming';
-    if(e.due_date<todayDate)status='Overdue';
-    else if(e.due_date===todayDate)status='Due Today';
-
-    const statusStyle=
-      status==='Overdue'
-        ? 'background:#fee2e2;color:#991b1b'
-        : status==='Due Today'
-          ? 'background:#ffedd5;color:#9a3412'
-          : 'background:#dbeafe;color:#1d4ed8';
-
-   return `<div class="item" style="${status==='Overdue'?'background:#fff5f5;border-left:4px solid #dc2626;padding-left:10px':status==='Due Today'?'background:#fffaf0;border-left:4px solid #f59e0b;padding-left:10px':''}">
-      <div class="item-main">
-        <b>${esc(l?.loan_name||'Loan')} — EMI #${e.emi_number}</b>
-        <div class="small">Due ${e.due_date}</div>
-        <div style="margin-top:5px">
-          <span class="pill" style="${statusStyle}">${status}</span>
-        </div>
-        ${actionButtons('emi',e.id,'EMI #'+e.emi_number)}
+  const monthPrefix=todayDate.slice(0,7);
+  return D.loans.map(l=>{
+    const loanEmis=D.emis.filter(e=>e.loan_id===l.id);
+    const paid=loanEmis.filter(e=>e.status==='paid');
+    const pending=loanEmis.filter(e=>e.status!=='paid');
+    const monthDue=pending.filter(e=>String(e.due_date||'').slice(0,7)===monthPrefix);
+    const overdue=pending.filter(e=>String(e.due_date||'')<todayDate);
+    const outstanding=Math.max(0,Number(l.principal_amount||0)-loanPaid(l.id));
+    const monthAmount=monthDue.reduce((a,e)=>a+Number(e.amount||0),0);
+    const overdueAmount=overdue.reduce((a,e)=>a+Number(e.amount||0),0);
+    const bank=(D.banks.find(b=>b.id===l.bank_id)||{}).name||'Bank';
+    return `<div class="card">
+      <div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start">
+        <div><b>${esc(bank)} — ${esc(l.loan_name)}</b><div class="small">Loan #${esc(l.loan_number||'—')}</div></div>
+        <span class="pill ${pending.length?'blue':'green'}">${pending.length?'Active':'Paid'}</span>
       </div>
-      <div class="right">
-        <b>${money(e.amount)}</b><br>
-        <button class="btn" style="padding:6px 8px;margin-top:5px" onclick="payEmi('${e.id}')">Mark Paid</button>
-      </div>
+      <div class="kpi"><span>Loan Amount</span><b>${money(l.principal_amount)}</b></div>
+      <div class="kpi"><span>Outstanding</span><b class="blue">${money(outstanding)}</b></div>
+      <div class="kpi"><span>Monthly EMI</span><b>${money(l.emi_amount)}</b></div>
+      <div class="kpi"><span>This Month Due</span><b class="orange">${money(monthAmount)}</b></div>
+      <div class="kpi"><span>Overdue</span><b class="red">${money(overdueAmount)}</b></div>
+      <div class="small" style="margin-top:8px">${paid.length}/${l.total_emis||loanEmis.length} EMIs paid</div>
     </div>`;
   }).join('');
 }
+
+function emiRows(mode='month'){
+  const todayDate=today();
+  let rows=D.emis.filter(e=>e.status!=='paid');
+  if(mode==='overdue')rows=rows.filter(e=>String(e.due_date||'')<todayDate);
+  else rows=rows.filter(e=>String(e.due_date||'').slice(0,7)===todayDate.slice(0,7));
+  rows.sort((a,b)=>String(a.due_date).localeCompare(String(b.due_date)) || Number(a.emi_number||0)-Number(b.emi_number||0));
+
+  if(!rows.length)return `<div class="empty">${mode==='overdue'?'No overdue EMIs.':'No EMIs due this month.'}</div>`;
+
+  return rows.map(e=>{
+    const l=D.loans.find(x=>x.id===e.loan_id);
+    const status=e.due_date<todayDate?'Overdue':e.due_date===todayDate?'Due Today':'Upcoming';
+    const statusStyle=status==='Overdue'?'background:#fee2e2;color:#991b1b':status==='Due Today'?'background:#ffedd5;color:#9a3412':'background:#dbeafe;color:#1d4ed8';
+    return `<div class="item" style="${status==='Overdue'?'background:#fff5f5;border-left:4px solid #dc2626;padding-left:10px':status==='Due Today'?'background:#fffaf0;border-left:4px solid #f59e0b;padding-left:10px':''}">
+      <div class="item-main">
+        <b>${esc(l?.loan_name||'Loan')} — EMI #${e.emi_number}</b>
+        <div class="small">Due ${e.due_date} • ${money(e.amount)}</div>
+        <div style="margin-top:5px"><span class="pill" style="${statusStyle}">${status}</span></div>
+        ${actionButtons('emi',e.id,'EMI #'+e.emi_number)}
+      </div>
+      <div class="right"><b>${money(e.amount)}</b><br><button class="btn" style="padding:6px 8px;margin-top:5px" onclick="payEmi('${e.id}')">Mark Paid</button></div>
+    </div>`;
+  }).join('');
+}
+
 function emiAllRows(filter='all'){
   if(!D.emis.length)return '<div class="empty">No EMI records.</div>';
 
