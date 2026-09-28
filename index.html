@@ -139,6 +139,7 @@ const $=id=>document.getElementById(id);
 const money=n=>'₹'+Math.round(Number(n)||0).toLocaleString('en-IN');
 const localDate=d=>{const x=d instanceof Date?d:new Date(d);return x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0')};
 const today=()=>localDate(new Date());
+const addMonthsKeepingDay=(dateStr,months)=>{const [yy,mm,dd]=String(dateStr).split('-').map(Number);const first=new Date(yy,mm-1+months,1);const last=new Date(first.getFullYear(),first.getMonth()+1,0).getDate();const day=Math.min(dd,last);return first.getFullYear()+'-'+String(first.getMonth()+1).padStart(2,'0')+'-'+String(day).padStart(2,'0')};
 const esc=s=>String(s??'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
 
 async function signUp(){
@@ -798,61 +799,51 @@ async function saveForm(e){
     if(t==='loan'){
       const patch={bank_id:$('bank_id').value,account_type:$('account_type').value,loan_name:$('lname').value.trim(),loan_number:$('loan_number').value.trim(),principal_amount:Number($('lamt').value)||0,outstanding_amount:Number($('lamt').value)||0,emi_amount:Number($('emi').value)||0,total_emis:Number($('total').value)||0,start_date:$('first').value,interest_rate:Number($('interest').value)||null};
       if(!patch.loan_name)throw new Error('Loan name is required.');
+      if(!patch.start_date)throw new Error('First EMI date is required.');
+
       let bankId=patch.bank_id;
       if(!bankId){
         const newName=$('newbank').value.trim();
         if(!newName)throw new Error('Select a bank or enter a new bank name.');
-        const bank=await insert('banks',{name:newName});D.banks.unshift(bank);bankId=bank.id;patch.bank_id=bankId;
+        const bank=await insert('banks',{name:newName});
+        D.banks.unshift(bank);
+        bankId=bank.id;
+        patch.bank_id=bankId;
       }
+
       if(editId){
         await update('loans',editId,patch);
-        const l=D.loans.find(x=>x.id===editId);Object.assign(l,patch);
-        // Update only unpaid EMI amounts/dates to keep paid history intact.
-        const pending=D.emis.filter(x=>x.loan_id===editId&&x.status!=='paid').sort((a,b)=>a.emi_number-b.emi_number);
-        let d=new Date(patch.start_date+'T00:00:00');
+        const l=D.loans.find(x=>x.id===editId);if(l)Object.assign(l,patch);
         for(let i=1;i<=patch.total_emis;i++){
+          const due=addMonthsKeepingDay(patch.start_date,i-1);
           const existing=D.emis.find(x=>x.loan_id===editId&&x.emi_number===i);
-          if(existing && existing.status==='paid'){ d.setMonth(d.getMonth()+1); continue; }
+          if(existing&&existing.status==='paid')continue;
           if(existing){
-            const due=localDate(d);
             await update('emis',existing.id,{due_date:due,amount:patch.emi_amount});
             existing.due_date=due;existing.amount=patch.emi_amount;
           }else{
-            const em=await insert('emis',{loan_id:editId,emi_number:i,due_date:localDate(d),amount:patch.emi_amount,status:'pending'});
+            const em=await insert('emis',{loan_id:editId,emi_number:i,due_date:due,amount:patch.emi_amount,status:'pending'});
             D.emis.push(em);
           }
-          d.setMonth(d.getMonth()+1);
         }
       }else{
         const l=await insert('loans',patch);
         D.loans.unshift(l);
-
-        let d=new Date(patch.start_date+'T00:00:00');
         const emiRows=[];
-
         for(let i=1;i<=l.total_emis;i++){
-          emiRows.push({
-            loan_id:l.id,
-            emi_number:i,
-            due_date:localDate(d),
-            amount:l.emi_amount,
-            status:'pending'
-          });
-
-          d.setMonth(d.getMonth()+1);
+          emiRows.push({loan_id:l.id,emi_number:i,due_date:addMonthsKeepingDay(patch.start_date,i-1),amount:l.emi_amount,status:'pending'});
         }
-
         if(emiRows.length){
           const {data:ems,error:emiError}=await sb
             .from('emis')
             .insert(emiRows.map(row=>({...row,user_id:USER.id})))
-            .select();
-
+            .select('id,loan_id,emi_number,due_date,amount,status');
           if(emiError)throw emiError;
-
           D.emis.push(...(ems||[]));
         }
       }
+    }
+
     if(t==='tx'){
       const patch={account_type:'personal',customer_id:$('customer_id')?.value||null,loan_id:$('loan_id')?.value||null,transaction_type:$('kind').value,amount:Number($('amt').value)||0,payment_method:$('method').value,description:$('desc').value.trim(),transaction_date:$('date').value};
       if(!patch.description)throw new Error('Description is required.');
@@ -959,7 +950,7 @@ async function payEmi(emiId,amount,date,method,syncTx=true){
   if(!e||e.status==='paid')return;
 
   const amt=Number(amount||e.amount);
-  const today=localDate(new Date());
+  const today=new Date().toISOString().slice(0,10);
 
   const paymentDate=prompt(
     'Payment Date (YYYY-MM-DD):',
