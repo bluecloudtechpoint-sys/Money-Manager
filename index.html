@@ -852,6 +852,7 @@ async function saveForm(e){
           D.emis.push(...(ems||[]));
         }
       }
+    }
     if(t==='tx'){
       const patch={account_type:'personal',customer_id:$('customer_id')?.value||null,loan_id:$('loan_id')?.value||null,transaction_type:$('kind').value,amount:Number($('amt').value)||0,payment_method:$('method').value,description:$('desc').value.trim(),transaction_date:$('date').value};
       if(!patch.description)throw new Error('Description is required.');
