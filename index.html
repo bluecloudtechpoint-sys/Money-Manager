@@ -46,6 +46,24 @@ hr{border:0;border-top:1px solid #eee;margin:14px 0}
 .emi-record{display:flex;justify-content:space-between;gap:10px;padding:12px 0;border-bottom:1px solid #eee}
 .emi-record:last-child{border-bottom:0}
 @media(max-width:560px){.emi-filterbar{grid-template-columns:repeat(2,1fr)}}
+
+.dash-category-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.dash-category{background:#fff;border:1px solid #e2e4e8;border-radius:16px;overflow:hidden;transition:box-shadow .18s,border-color .18s}
+.dash-category.open{border-color:#cfd4dc;box-shadow:0 5px 18px rgba(17,19,24,.06)}
+.dash-category-head{width:100%;border:0;background:transparent;padding:16px;text-align:left;display:flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer;color:#17181b}
+.dash-category-head:hover{background:#fafafa}
+.dash-category-name{font-size:13px;color:#737780}
+.dash-category-summary{font-size:21px;font-weight:800;margin-top:4px}
+.dash-category-arrow{width:30px;height:30px;border-radius:50%;background:#eef0f4;display:flex;align-items:center;justify-content:center;font-size:20px;transition:transform .18s}
+.dash-category.open .dash-category-arrow{transform:rotate(90deg)}
+.dash-category-body{display:none;border-top:1px solid #eee;padding:12px 16px 15px}
+.dash-category.open .dash-category-body{display:block}
+.dash-detail-row{display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid #f0f0f0;font-size:12px}
+.dash-detail-row:last-child{border-bottom:0}
+.dash-detail-title{font-weight:700}
+.dash-detail-sub{font-size:10px;color:#737780;margin-top:2px}
+@media(max-width:760px){.dash-category-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:480px){.dash-category-grid{grid-template-columns:1fr}}
 </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
@@ -299,6 +317,76 @@ function go(p,b){
 
   render(p);
 }
+function toggleDashCategory(id){
+  const card=$(id);
+  if(card)card.classList.toggle('open');
+}
+
+function dashboardCategoryCards(rec,paid,given,recovered){
+  const pendingUdhar=Math.max(0,given-recovered);
+  const loanCount=D.loans.length;
+
+  const receivedRows=D.tx
+    .filter(x=>['money_received','udhar_recovered'].includes(x.transaction_type))
+    .sort((a,b)=>String(b.transaction_date||'').localeCompare(String(a.transaction_date||'')))
+    .slice(0,8);
+
+  const paidRows=D.tx
+    .filter(x=>['money_paid','emi_paid'].includes(x.transaction_type))
+    .sort((a,b)=>String(b.transaction_date||'').localeCompare(String(a.transaction_date||'')))
+    .slice(0,8);
+
+  const customerBalances=D.customers.map(c=>{
+    const tx=D.tx.filter(x=>x.customer_id===c.id);
+    const balance=Math.max(0,
+      tx.filter(x=>x.transaction_type==='udhar_given').reduce((a,x)=>a+Number(x.amount||0),0)-
+      tx.filter(x=>x.transaction_type==='udhar_recovered').reduce((a,x)=>a+Number(x.amount||0),0)
+    );
+    return {c,balance};
+  }).filter(x=>x.balance>0).sort((a,b)=>b.balance-a.balance).slice(0,8);
+
+  const loanRows=D.loans.map(l=>{
+    const out=Math.max(0,Number(l.principal_amount||0)-loanPaid(l.id));
+    return {l,out};
+  });
+
+  const rows=(items,empty)=>items.length?items.map(x=>x).join(''):empty;
+  const txLine=x=>`<div class="dash-detail-row"><div><div class="dash-detail-title">${esc(x.description||x.transaction_type||'Transaction')}</div><div class="dash-detail-sub">${esc(x.transaction_date||'—')} • ${esc(x.payment_method||'—')}</div></div><b>${money(x.amount)}</b></div>`;
+
+  return `<div class="dash-category-grid">
+    <div class="dash-category" id="dashCatReceived">
+      <button class="dash-category-head" onclick="toggleDashCategory('dashCatReceived')">
+        <div><div class="dash-category-name">Money Received</div><div class="dash-category-summary green">${money(rec)}</div></div><span class="dash-category-arrow">›</span>
+      </button>
+      <div class="dash-category-body">${rows(receivedRows.map(txLine),'<div class="empty">No received transactions.</div>')}</div>
+    </div>
+
+    <div class="dash-category" id="dashCatPaid">
+      <button class="dash-category-head" onclick="toggleDashCategory('dashCatPaid')">
+        <div><div class="dash-category-name">Money Paid</div><div class="dash-category-summary red">${money(paid)}</div></div><span class="dash-category-arrow">›</span>
+      </button>
+      <div class="dash-category-body">${rows(paidRows.map(txLine),'<div class="empty">No paid transactions.</div>')}</div>
+    </div>
+
+    <div class="dash-category" id="dashCatUdhar">
+      <button class="dash-category-head" onclick="toggleDashCategory('dashCatUdhar')">
+        <div><div class="dash-category-name">Pending Udhar</div><div class="dash-category-summary orange">${money(pendingUdhar)}</div></div><span class="dash-category-arrow">›</span>
+      </button>
+      <div class="dash-category-body">${rows(customerBalances.map(x=>`<div class="dash-detail-row"><div><div class="dash-detail-title">${esc(x.c.name)}</div><div class="dash-detail-sub">${esc(x.c.phone||'Pending balance')}</div></div><b class="orange">${money(x.balance)}</b></div>`),'<div class="empty">No pending Udhar.</div>')}</div>
+    </div>
+
+    <div class="dash-category" id="dashCatLoans">
+      <button class="dash-category-head" onclick="toggleDashCategory('dashCatLoans')">
+        <div><div class="dash-category-name">Loan Center</div><div class="dash-category-summary blue">${loanCount} ${loanCount===1?'Loan':'Loans'}</div></div><span class="dash-category-arrow">›</span>
+      </button>
+      <div class="dash-category-body">
+        ${loanRows.length?loanRows.map(x=>`<div class="dash-detail-row"><div><div class="dash-detail-title">${esc(x.l.loan_name)}</div><div class="dash-detail-sub">Outstanding ${money(x.out)} • EMI ${money(x.l.emi_amount)}</div></div><button class="btn alt" style="padding:6px 9px;font-size:11px" onclick="openLoanPrivate('${x.l.id}')">Open</button></div>`).join(''):'<div class="empty">No loans added.</div>'}
+        <button class="btn alt" style="width:100%;margin-top:9px;padding:8px" onclick="go('loanCenter')">Open Loan Center →</button>
+      </div>
+    </div>
+  </div>`;
+}
+
 function render(p='dash'){
   const rec=D.tx.filter(x=>['money_received','udhar_recovered'].includes(x.transaction_type)).reduce((a,x)=>a+Number(x.amount||0),0);
   const paid=D.tx.filter(x=>['money_paid','emi_paid'].includes(x.transaction_type)).reduce((a,x)=>a+Number(x.amount||0),0);
@@ -321,12 +409,7 @@ function render(p='dash'){
   const totalLoanAmount=D.loans.reduce((a,l)=>a+Number(l.principal_amount||0),0);
 
   $('app').innerHTML=
-    `<div class="grid">
-      <div class="card"><div class="label">Money Received</div><div class="num green">${money(rec)}</div></div>
-      <div class="card"><div class="label">Money Paid</div><div class="num red">${money(paid)}</div></div>
-      <div class="card"><div class="label">Pending Udhar</div><div class="num orange">${money(Math.max(0,given-recovered))}</div></div>
-      <div class="card"><div class="label">Loan Center</div><div class="num blue">${D.loans.length}</div><button class="btn alt" style="margin-top:7px;padding:7px 10px" onclick="go('loanCenter')">Open Loans →</button></div>
-    </div>
+    `${dashboardCategoryCards(rec,paid,given,recovered)}
 
     <div class="actions">
       <button class="btn" onclick="openModal('customer')">+ Customer</button>
