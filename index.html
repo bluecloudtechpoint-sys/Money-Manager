@@ -26,7 +26,7 @@ nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid 
 .mini{border:0;border-radius:8px;padding:6px 9px;background:#e7e9ee;color:#111318;font-weight:750;font-size:11px}
 .mini.danger{background:#ffe7e5;color:#b42318}
 .item-main{min-width:0;flex:1}
-.loan-selector{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px}.loan-tile{background:#fff;border:1px solid #e1e3e7;border-radius:16px;padding:15px;cursor:pointer;transition:.15s}.loan-tile:hover{transform:translateY(-1px);box-shadow:0 5px 18px #0001}.loan-tile .loan-name{font-size:16px;font-weight:800}.loan-tile .loan-meta{font-size:11px;color:#737780;margin-top:3px}.loan-private{background:#fff;border:1px solid #e1e3e7;border-radius:18px;padding:16px}.loan-private-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:12px}.loan-private-head h2{margin:0}.back-link{border:0;border-radius:10px;padding:8px 11px;background:#e7e9ee;font-weight:750;cursor:pointer}.loan-private-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}.loan-private-kpi{border:1px solid #e5e6e9;border-radius:13px;padding:12px}.loan-private-kpi .label{font-size:11px;color:#737780}.loan-private-kpi .value{font-size:18px;font-weight:800;margin-top:4px}@media(max-width:680px){.loan-private-kpis{grid-template-columns:1fr 1fr}}
+.loan-selector{display:grid;grid-template-columns:1fr;gap:9px}.loan-accordion{background:#fff;border:1px solid #e1e3e7;border-radius:16px;overflow:hidden}.loan-accordion-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:15px;cursor:pointer;user-select:none}.loan-accordion-head:hover{background:#fafafa}.loan-accordion-name{font-size:17px;font-weight:800}.loan-accordion-meta{font-size:11px;color:#737780;margin-top:3px}.loan-arrow{font-size:24px;font-weight:800;line-height:1;transition:transform .18s}.loan-accordion.open .loan-arrow{transform:rotate(90deg)}.loan-accordion-body{display:none;border-top:1px solid #eee;padding:14px}.loan-accordion.open .loan-accordion-body{display:block}.loan-summary-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}.loan-summary-box{border:1px solid #e5e6e9;border-radius:13px;padding:12px}.loan-summary-box .label{font-size:11px;color:#737780}.loan-summary-box .value{font-size:18px;font-weight:800;margin-top:4px}.loan-private{background:#fff;border:1px solid #e1e3e7;border-radius:18px;padding:16px}.loan-private-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:12px}.loan-private-head h2{margin:0}.back-link{border:0;border-radius:10px;padding:8px 11px;background:#e7e9ee;font-weight:750;cursor:pointer}.loan-private-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}.loan-private-kpi{border:1px solid #e5e6e9;border-radius:13px;padding:12px}.loan-private-kpi .label{font-size:11px;color:#737780}.loan-private-kpi .value{font-size:18px;font-weight:800;margin-top:4px}@media(max-width:680px){.loan-private-kpis{grid-template-columns:1fr 1fr}.loan-summary-grid{grid-template-columns:1fr 1fr}}
 .bank-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
 hr{border:0;border-top:1px solid #eee;margin:14px 0}
 </style>
@@ -320,7 +320,7 @@ function render(p='dash'){
 
     <div class="section">
       <div class="title">Loans</div>
-      <div class="small" style="margin-bottom:9px">Select a loan to open its private loan dashboard. Loan details are kept separate.</div>
+      <div class="small" style="margin-bottom:9px">Tap the arrow on a loan to expand its details. Loans stay separate from each other.</div>
       <div class="loan-selector">${loanSelectorTiles()}</div>
     </div>
 
@@ -365,6 +365,10 @@ function render(p='dash'){
   </div>
   <div id="emiRecordsList" class="card">${emiAllRows()}</div>
 </div>`;
+ if(p==='loanCenter')$('app').innerHTML=loanCenterView();
+
+ if(p==='loanPrivate')$('app').innerHTML=loanPrivateView(window.__selectedLoanId);
+
  if(p==='tx')$('app').innerHTML=
   `<div class="actions"><button class="btn" onclick="openModal('tx')">+ Transaction</button></div>
   <div class="card">
@@ -448,26 +452,52 @@ function customerRows(a){
 function filterCustomers(q){q=q.toLowerCase();$('customerList').innerHTML=customerRows(D.customers.filter(c=>(c.name+' '+(c.phone||'')).toLowerCase().includes(q)))}
 function loanPaid(id){return D.emis.filter(e=>e.loan_id===id&&e.status==='paid').reduce((a,e)=>a+Number(e.paid_amount||e.amount||0),0)}
 function loanSelectorTiles(){
-  if(!D.loans.length)return '<div class="empty">No loans added yet. Add a loan to create its private dashboard.</div>';
+  if(!D.loans.length)return '<div class="empty">No loans added yet. Add a loan to create its private loan section.</div>';
   return D.loans.map(l=>{
-    const paid=D.emis.filter(e=>e.loan_id===l.id&&e.status==='paid').length;
+    const allEmis=D.emis.filter(e=>e.loan_id===l.id);
+    const paid=allEmis.filter(e=>e.status==='paid').length;
+    const totalEmis=Number(l.total_emis||allEmis.length||0);
+    const pending=Math.max(0,totalEmis-paid);
     const out=Math.max(0,Number(l.principal_amount||0)-loanPaid(l.id));
     const bank=(D.banks.find(b=>b.id===l.bank_id)||{}).name||'Bank';
-    const pending=D.emis.filter(e=>e.loan_id===l.id&&e.status!=='paid').length;
-    return `<div class="loan-tile" onclick="openLoanPrivate('${l.id}')">
-      <div class="loan-name">${esc(l.loan_name)}</div>
-      <div class="loan-meta">${esc(bank)} • ${esc(l.loan_number||'No loan number')}</div>
-      <div class="kpi"><span>Loan Amount</span><b>${money(l.principal_amount)}</b></div>
-      <div class="kpi"><span>Outstanding</span><b class="blue">${money(out)}</b></div>
-      <div class="kpi"><span>Monthly EMI</span><b>${money(l.emi_amount)}</b></div>
-      <div class="small" style="margin-top:7px">${paid}/${l.total_emis||D.emis.filter(e=>e.loan_id===l.id).length} paid • ${pending} pending</div>
-      <button class="btn" style="width:100%;margin-top:9px">Open Loan Dashboard →</button>
+    const monthPrefix=today().slice(0,7);
+    const pendingEmis=allEmis.filter(e=>e.status!=='paid');
+    const monthDue=pendingEmis.filter(e=>String(e.due_date||'').slice(0,7)===monthPrefix);
+    const overdue=pendingEmis.filter(e=>String(e.due_date||'')<today());
+    const monthAmount=monthDue.reduce((a,e)=>a+Number(e.amount||0),0);
+    const overdueAmount=overdue.reduce((a,e)=>a+Number(e.amount||0),0);
+    return `<div class="loan-accordion" id="loanAcc_${l.id}">
+      <div class="loan-accordion-head" onclick="toggleLoanAccordion('${l.id}')">
+        <div><div class="loan-accordion-name">${esc(l.loan_name)}</div><div class="loan-accordion-meta">${esc(bank)} • ${esc(l.loan_number||'No loan number')}</div></div>
+        <div class="loan-arrow">›</div>
+      </div>
+      <div class="loan-accordion-body">
+        <div class="loan-summary-grid">
+          <div class="loan-summary-box"><div class="label">Loan Amount</div><div class="value">${money(l.principal_amount)}</div></div>
+          <div class="loan-summary-box"><div class="label">Outstanding</div><div class="value blue">${money(out)}</div></div>
+          <div class="loan-summary-box"><div class="label">This Month Due</div><div class="value orange">${money(monthAmount)}</div></div>
+          <div class="loan-summary-box"><div class="label">Total Overdue</div><div class="value red">${money(overdueAmount)}</div></div>
+        </div>
+        <div class="grid" style="margin-top:9px">
+          <div class="card"><div class="label">Monthly EMI</div><div class="num">${money(l.emi_amount)}</div></div>
+          <div class="card"><div class="label">EMIs</div><div class="num blue">${paid}/${totalEmis}</div><div class="small">${pending} pending</div></div>
+        </div>
+        <div class="row-actions" style="justify-content:flex-start;margin-top:10px">
+          <button class="btn" type="button" onclick="openLoanPrivate('${l.id}')">Open Loan Dashboard →</button>
+          <button class="mini" type="button" onclick="editRecord('loan','${l.id}')">✏️ Edit Loan</button>
+        </div>
+      </div>
     </div>`;
   }).join('');
 }
+function toggleLoanAccordion(id){
+  const el=document.getElementById('loanAcc_'+id);
+  if(!el)return;
+  el.classList.toggle('open');
+}
 function openLoanPrivate(id){
   window.__selectedLoanId=id;
-  go('loanPrivate');
+  render('loanPrivate');
 }
 function loanCenterView(){
   return `<div class="actions">
@@ -475,7 +505,7 @@ function loanCenterView(){
     <button class="btn alt" onclick="go('dash')">← Main Dashboard</button>
   </div>
   <div class="section"><div class="title">Loan Center</div>
-    <div class="small" style="margin-bottom:9px">Choose one loan. Each loan has its own separate dashboard and EMI information.</div>
+    <div class="small" style="margin-bottom:9px">Tap the arrow to expand a loan. Each loan remains separate.</div>
     <div class="loan-selector">${loanSelectorTiles()}</div>
   </div>`;
 }
