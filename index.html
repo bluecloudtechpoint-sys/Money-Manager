@@ -351,7 +351,30 @@ function dashboardCategoryCards(rec,paid,given,recovered){
   });
 
   const rows=(items,empty)=>items.length?items.map(x=>x).join(''):empty;
-  const txLine=x=>`<div class="dash-detail-row"><div><div class="dash-detail-title">${esc(x.description||x.transaction_type||'Transaction')}</div><div class="dash-detail-sub">${esc(x.transaction_date||'—')} • ${esc(x.payment_method||'—')}</div></div><b>${money(x.amount)}</b></div>`;
+  const txLine=x=>{
+    const linkedLoan=x.loan_id?D.loans.find(l=>l.id===x.loan_id):null;
+    const linkedCustomer=x.customer_id?D.customers.find(c=>c.id===x.customer_id):null;
+
+    let title=esc(x.description||x.transaction_type||'Transaction');
+    let sub=`${esc(x.transaction_date||'—')} • ${esc(x.payment_method||'—')}`;
+
+    if(x.transaction_type==='emi_paid' && linkedLoan){
+      title=`EMI Paid — ${esc(linkedLoan.loan_name)}`;
+      sub=`${esc(x.transaction_date||'—')} • ${esc(x.payment_method||'—')} • ${esc((D.banks.find(b=>b.id===linkedLoan.bank_id)||{}).name||'Loan')}`;
+    }else if(x.loan_id && linkedLoan){
+      title=`${esc(linkedLoan.loan_name)} — ${title}`;
+    }else if(linkedCustomer){
+      sub+=` • ${esc(linkedCustomer.name)}`;
+    }
+
+    return `<div class="dash-detail-row">
+      <div>
+        <div class="dash-detail-title">${title}</div>
+        <div class="dash-detail-sub">${sub}</div>
+      </div>
+      <b>${money(x.amount)}</b>
+    </div>`;
+  };
 
   return `<div class="dash-category-grid">
     <div class="dash-category" id="dashCatReceived">
